@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   export let data: PageData;
-
+  import CatalogHeader from '$lib/components/layout/CatalogHeader.svelte';
   import FiltersBar from '$lib/components/filters/FiltersBar.svelte';
   import { filtersStore } from '$lib/stores/filters';
   import type { Product } from '$lib/types/product';
@@ -60,7 +60,7 @@
     return out;
   }
 </script>
-
+<CatalogHeader/>
 <section class="catalog">
  
   <h1>Catálogo</h1>
