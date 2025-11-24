@@ -5,6 +5,7 @@
   import FiltersBar from '$lib/components/filters/FiltersBar.svelte';
   import { filtersStore } from '$lib/stores/filters';
   import type { Product } from '$lib/types/product';
+  
 
   let products: Product[] = data.products ?? [];
   let filtered: Product[] = products;
@@ -80,6 +81,7 @@
           <p class="brand">{p.marca}</p>
           <p class="price">€{p.precio_publicado}</p>
           <p class="size">Talla {p.talla}</p>
+
         </article>
       {/each}
     </div>
