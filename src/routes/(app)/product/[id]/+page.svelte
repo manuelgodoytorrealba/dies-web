@@ -21,7 +21,7 @@
 
     <h2>Estado</h2>
     <p>{product.status_producto}</p>
-    <WhatsAppButton></WhatsAppButton>
+    <WhatsAppButton product={p} />
   </div>
 </section>
 
