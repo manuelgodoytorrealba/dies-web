@@ -4,6 +4,7 @@
   import WhatsAppButton from '../../catalog/WhatsAppButton.svelte';
 
   const { product } = data;
+  const p = data.product;
 </script>
 
 <section class="product-detail">
