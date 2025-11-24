@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   export let data: PageData;
+  import WhatsAppButton from '../../catalog/WhatsAppButton.svelte';
 
   const { product } = data;
 </script>
@@ -20,6 +21,7 @@
 
     <h2>Estado</h2>
     <p>{product.status_producto}</p>
+    <WhatsAppButton></WhatsAppButton>
   </div>
 </section>
 
