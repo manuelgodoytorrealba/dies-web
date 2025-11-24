@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+
   import { fetchProductsMeta } from '$lib/gateways/meta';
   import { metaStore } from '$lib/stores/meta';
 
@@ -13,11 +15,6 @@
     resetFilters
   } from '$lib/stores/filters';
 
-  onMount(async () => {
-    const meta = await fetchProductsMeta(fetch);
-    metaStore.set(meta);
-  });
-
   $: meta = $metaStore;
   $: filters = $filtersStore;
 
@@ -27,18 +24,41 @@
     { value: 'price-asc', label: 'Precio: menor a mayor' },
     { value: 'price-desc', label: 'Precio: mayor a menor' }
   ];
+
+  async function refreshMeta(category?: string) {
+    // evita SSR
+    if (!browser) return;
+
+    const m = await fetchProductsMeta(fetch, category);
+    metaStore.set(m);
+  }
+
+  // primera carga en cliente
+  onMount(async () => {
+    await refreshMeta(filters.category);
+  });
+
+  // cada vez que cambie categoría en cliente, refresca meta
+  $: if (browser && filters.category) {
+    refreshMeta(filters.category);
+  }
 </script>
 
 <!-- Chips de categoría -->
-<div class="categories">
-  {#each meta.categories as c}
-    <button class:selected={filters.category === c} on:click={() => setCategory(c)}>
-      {c}
-    </button>
-  {/each}
-</div>
+{#if meta?.categories?.length}
+  <div class="categories">
+    {#each meta.categories as c}
+      <button
+        class:selected={filters.category === c}
+        on:click={() => setCategory(c)}
+      >
+        {c}
+      </button>
+    {/each}
+  </div>
+{/if}
 
-<!-- Barra superior -->
+<!-- Barra principal -->
 <div class="bar">
   <input
     placeholder="Buscar..."
@@ -51,7 +71,9 @@
     on:change={(e) => setOrderBy((e.target as HTMLSelectElement).value as any)}
   >
     {#each orderOptions as opt}
-      <option value={opt.value}>{opt.label}</option>
+      <option value={opt.value}>
+        {opt.label}
+      </option>
     {/each}
   </select>
 
@@ -71,12 +93,12 @@
   >
     <option value="">Talla</option>
     {#each meta.sizes as s}
-      <option value={s}>{s}</option>
+      <option value={String(s)}>{s}</option>
     {/each}
   </select>
 </div>
 
-<!-- Pills -->
+<!-- Pills activas -->
 {#if filters.query || filters.brand || filters.size || filters.orderBy !== 'none'}
   <aside class="active">
     <p>Filtros activos</p>
@@ -141,7 +163,6 @@
     margin-bottom: 14px;
     flex-wrap: wrap;
   }
-
   input,
   select {
     padding: 8px 10px;
@@ -157,7 +178,6 @@
     border-radius: 12px;
     margin-top: 10px;
   }
-
   .pill {
     display: inline-flex;
     align-items: center;
@@ -176,7 +196,6 @@
     cursor: pointer;
     font-weight: bold;
   }
-
   .reset {
     display: block;
     margin-top: 10px;

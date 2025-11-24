@@ -4,64 +4,85 @@ import { supabasePublic } from '$lib/server/supabase';
 
 const PRODUCTS_TABLE = 'products';
 
-export async function GET() {
+export async function GET({ url }: { url: URL }) {
   try {
-    // brands
-    const { data: brandsData, error: brandsError } = await supabasePublic
-      .from(PRODUCTS_TABLE)
-      .select('marca')
-      .eq('published', true);
+    const categoryParam = url.searchParams.get('category');
+    const category = categoryParam ? categoryParam.toLowerCase() : null;
 
-    if (brandsError) throw brandsError;
-
-    const brands = Array.from(
-      new Set((brandsData ?? []).map((r) => r.marca).filter(Boolean))
-    ).sort();
-
-    // sizes
-    const { data: sizesData, error: sizesError } = await supabasePublic
-      .from(PRODUCTS_TABLE)
-      .select('talla')
-      .eq('published', true);
-
-    if (sizesError) throw sizesError;
-
-    const sizes = Array.from(
-      new Set((sizesData ?? []).map((r) => r.talla).filter(Boolean))
-    ).sort((a, b) => Number(a) - Number(b));
-
-    // price range
-    const { data: pricesData, error: pricesError } = await supabasePublic
-      .from(PRODUCTS_TABLE)
-      .select('precio_publicado')
-      .eq('published', true);
-
-    if (pricesError) throw pricesError;
-
-    const prices = (pricesData ?? [])
-      .map((r) => Number(r.precio_publicado))
-      .filter((n) => !Number.isNaN(n));
-
-    const minPrice = prices.length ? Math.min(...prices) : 0;
-    const maxPrice = prices.length ? Math.max(...prices) : 0;
-
-    // categories (fallback si no existe columna)
+    // ---------- CATEGORIES (NO se filtran por category) ----------
     const { data: catsData, error: catsError } = await supabasePublic
       .from(PRODUCTS_TABLE)
       .select('categoria')
       .eq('published', true);
 
     const categories = catsError
-      ? ['zapatillas', 'ropa', 'accesorios'] // UI list mientras metes la columna
+      ? ['zapatillas', 'ropa', 'accesorios']
       : Array.from(
-          new Set((catsData ?? []).map((r) => r.categoria).filter(Boolean))
+          new Set((catsData ?? []).map((r: { categoria: string | null }) => r.categoria).filter(Boolean))
         ).sort();
 
+    // helper para aplicar filtro categoria SOLO a queries de meta dinámico
+    const applyCategory = <T extends { eq: Function }>(q: T) =>
+      category ? q.eq('categoria', category) : q;
+
+    // ---------- BRANDS (filtradas por category) ----------
+    let brandsQuery = supabasePublic
+      .from(PRODUCTS_TABLE)
+      .select('marca')
+      .eq('published', true);
+
+    brandsQuery = applyCategory(brandsQuery);
+
+    const { data: brandsData, error: brandsError } = await brandsQuery;
+    if (brandsError) throw brandsError;
+
+    const brands = Array.from(
+      new Set((brandsData ?? []).map((r: { marca: string | null }) => r.marca).filter(Boolean))
+    ).sort();
+
+    // ---------- SIZES (filtradas por category) ----------
+    let sizesQuery = supabasePublic
+      .from(PRODUCTS_TABLE)
+      .select('talla')
+      .eq('published', true);
+
+    sizesQuery = applyCategory(sizesQuery);
+
+    const { data: sizesData, error: sizesError } = await sizesQuery;
+    if (sizesError) throw sizesError;
+
+    const sizes = Array.from(
+      new Set((sizesData ?? []).map((r: { talla: string | null }) => r.talla).filter(Boolean))
+    ).sort((a, b) => {
+      const na = Number(a);
+      const nb = Number(b);
+      if (Number.isNaN(na) || Number.isNaN(nb)) return String(a).localeCompare(String(b));
+      return na - nb;
+    });
+
+    // ---------- PRICE RANGE (filtradas por category) ----------
+    let pricesQuery = supabasePublic
+      .from(PRODUCTS_TABLE)
+      .select('precio_publicado')
+      .eq('published', true);
+
+    pricesQuery = applyCategory(pricesQuery);
+
+    const { data: pricesData, error: pricesError } = await pricesQuery;
+    if (pricesError) throw pricesError;
+
+    const prices = (pricesData ?? [])
+      .map((r: { precio_publicado: string | null }) => Number(r.precio_publicado))
+      .filter((n) => !Number.isNaN(n));
+
+    const minPrice = prices.length ? Math.min(...prices) : 0;
+    const maxPrice = prices.length ? Math.max(...prices) : 0;
+
     return json({
-      brands,
-      sizes,
-      priceRange: { min: minPrice, max: maxPrice },
-      categories
+      categories,          // siempre completas
+      brands,              // filtradas por category
+      sizes,               // filtradas por category
+      priceRange: { min: minPrice, max: maxPrice }
     });
   } catch (err) {
     console.error('[api/products/meta GET]', err);

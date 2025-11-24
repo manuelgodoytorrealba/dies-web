@@ -61,6 +61,7 @@
 </script>
 
 <section class="catalog">
+ 
   <h1>Catálogo</h1>
 
   <FiltersBar />
@@ -83,6 +84,7 @@
       {/each}
     </div>
   {/if}
+  
 </section>
 
 <style>

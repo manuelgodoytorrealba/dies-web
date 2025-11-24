@@ -6,10 +6,15 @@ export type ProductsMeta = {
   categories: string[];
 };
 
-type FetchFn = typeof fetch;
+export async function fetchProductsMeta(
+  fetchFn: typeof fetch,
+  category?: string
+): Promise<ProductsMeta> {
+  const url = category
+    ? `/api/products/meta?category=${encodeURIComponent(category)}`
+    : `/api/products/meta`;
 
-export async function fetchProductsMeta(fetchFn: FetchFn): Promise<ProductsMeta> {
-  const res = await fetchFn('/api/products/meta');
+  const res = await fetchFn(url);
   if (!res.ok) throw new Error('Failed to fetch products meta');
   return res.json();
 }
