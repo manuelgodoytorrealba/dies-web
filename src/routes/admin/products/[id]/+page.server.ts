@@ -1,7 +1,14 @@
 // src/routes/admin/products/[id]/+page.server.ts
 import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { getProductById, updateProduct, deleteProduct, getProductImages } from '$lib/server/db-repo';
+import {
+  getProductById,
+  updateProduct,
+  deleteProduct,
+  getProductImages
+} from '$lib/server/db-repo';
+
+const ADMINS = ['manuelgodoyvzla@gmail.com']; // tu lista de admins
 
 export const load: PageServerLoad = async ({ params, locals }) => {
   const session = await locals.getSession();
@@ -11,18 +18,6 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     throw redirect(302, '/catalog');
   }
 
-  const product = await getProductById(params.id);
-  if (!product) {
-    throw redirect(302, '/admin/products');
-  }
-
-  const images = await getProductImages(params.id);
-
-  return { product, images };
-
-};
-
-export const load: PageServerLoad = async ({ params }) => {
   try {
     const product = await getProductById(params.id);
 
@@ -30,7 +25,9 @@ export const load: PageServerLoad = async ({ params }) => {
       throw redirect(303, '/admin/products');
     }
 
-    return { product };
+    const images = await getProductImages(params.id);
+
+    return { product, images };
   } catch (err) {
     console.error('[admin/getProductById]', err);
     throw redirect(303, '/admin/products');
@@ -38,7 +35,14 @@ export const load: PageServerLoad = async ({ params }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ request, params }) => {
+  default: async ({ request, params, locals }) => {
+    const session = await locals.getSession();
+    const email = session?.user?.email ?? '';
+
+    if (!session || !ADMINS.includes(email)) {
+      throw redirect(302, '/catalog');
+    }
+
     const form = await request.formData();
     const intent = String(form.get('intent') ?? 'save');
 

@@ -1,6 +1,17 @@
 <script lang="ts">
-  // Solo necesitamos exponer imageUrl para poder hacer bind:imageUrl
+  import { createEventDispatcher } from 'svelte';
+
+  // ✅ props
   export let imageUrl: string = '';
+  export let productId: string | null = null;
+
+  // los dos de abajo son opcionales, pero así no te marca error al pasarlos
+  export let bucket: string = 'productos';
+  export let folder: string | null = null;
+
+  const dispatch = createEventDispatcher<{
+    uploaded: { url: string; id: string };
+  }>();
 
   let uploading = false;
   let errorMsg = '';
@@ -11,10 +22,15 @@
 
     errorMsg = '';
 
-    // Validar tipo
+    // ⚠️ Validar tipo (decidimos usar solo estos formatos)
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowed.includes(file.type)) {
       errorMsg = 'Solo se permiten imágenes JPG, PNG o WEBP.';
+      return;
+    }
+
+    if (!productId) {
+      errorMsg = 'No hay productId definido aún. Guarda primero el producto.';
       return;
     }
 
@@ -23,6 +39,9 @@
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('product_id', productId);
+      formData.append('bucket', bucket);
+      if (folder) formData.append('folder', folder);
 
       const res = await fetch('/admin/products/upload-image', {
         method: 'POST',
@@ -34,12 +53,14 @@
       if (!res.ok || !json.url) {
         console.error('[ImageUploader] upload error', json);
         errorMsg = json.error ?? 'No se pudo subir la imagen.';
-        uploading = false;
         return;
       }
 
-      // URL pública devuelta por el endpoint
+      // URL principal (si lo usas con bind:imageUrl)
       imageUrl = json.url;
+
+      // ✅ avisamos al padre para que refresque la galería
+      dispatch('uploaded', { url: json.url, id: json.id });
     } catch (err) {
       console.error('[ImageUploader] unexpected error', err);
       errorMsg = 'No se pudo subir la imagen.';
@@ -82,6 +103,9 @@
         Arrastra una imagen aquí o haz clic para seleccionarla
       {/if}
     </p>
+ <p class="hint">
+  Recomendado: WEBP o JPG, cuadrado (~1200×1200px, máx. 1MB).
+</p>
   </label>
 
   {#if errorMsg}
@@ -112,6 +136,12 @@
 
   .dropzone:hover {
     background: #f3f3f3;
+  }
+
+  .hint {
+    margin-top: 8px;
+    font-size: 12px;
+    opacity: 0.7;
   }
 
   .error {

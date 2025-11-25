@@ -2,6 +2,8 @@
 import { supabasePublic, supabaseAdmin } from './supabase';
 
 const PRODUCTS_TABLE = 'products';
+const PRODUCT_IMAGES_TABLE = 'product_images';
+
 
 // Columnas reales
 const ID_COL = 'product_id';
@@ -143,24 +145,29 @@ export async function updateProduct(id: string, patch: Record<string, any>) {
  * Borrar producto (solo admin).
  */
 export async function deleteProduct(id: string) {
+  // 1. eliminar leads relacionados
+  await supabaseAdmin.from('leads').delete().eq('product_id', id);
+
+  // 2. eliminar imágenes
+  await supabaseAdmin.from('product_images').delete().eq('product_id', id);
+
+  // 3. eliminar producto
   const { error } = await supabaseAdmin
-    .from(PRODUCTS_TABLE)
+    .from('products')
     .delete()
-    .eq(ID_COL, id);
+    .eq('product_id', id);
 
   if (error) handleError('deleteProduct', error);
-  return true;
 }
 
 // --- GALERÍA DE IMÁGENES POR PRODUCTO ------------------------
 
 export async function getProductImages(productId: string) {
   const { data, error } = await supabasePublic
-    .from('product_images')
+    .from(PRODUCT_IMAGES_TABLE)
     .select('*')
     .eq('product_id', productId)
-    .order('orden', { ascending: true })
-    .order('created_at', { ascending: true });
+    .order('orden', { ascending: true });
 
   if (error) handleError('getProductImages', error);
   return data ?? [];
