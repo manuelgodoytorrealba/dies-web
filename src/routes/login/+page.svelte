@@ -1,55 +1,46 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
-  import { goto } from '$app/navigation';
 
-  export let data: {
-    success?: boolean;
-    error?: string;
-  };
-
-  let loading = false;
+  export let form;
 </script>
 
 <section class="auth">
   <h1>Iniciar sesión</h1>
 
-  <form
-    method="POST"
-    class="card"
-    use:enhance={() => {
-      loading = true;
-
-      return async ({ result }) => {
-        loading = false;
-
-        if (result.type === 'success') {
-          // si el action devolvió success, vamos al catálogo
-          goto('/catalog');
-        }
-      };
-    }}
-  >
+  <form method="POST" use:enhance class="card">
     <label>
       Email
-      <input name="email" type="email" placeholder="tu@email.com" required />
+      <input
+        type="email"
+        name="email"
+        placeholder="tu@email.com"
+        value={form?.email ?? ''}
+        required
+      />
     </label>
 
     <label>
       Contraseña
-      <input name="password" type="password" placeholder="••••••••" required />
+      <input
+        type="password"
+        name="password"
+        placeholder="••••••••"
+        required
+      />
     </label>
 
-    {#if data?.error}
-      <p class="error">{data.error}</p>
+    {#if form?.error}
+      <p class="error">{form.error}</p>
     {/if}
 
-    <button type="submit" disabled={loading}>
-      {loading ? 'Entrando...' : 'Entrar'}
+    <button type="submit">
+      Entrar
     </button>
 
     <div class="links">
       <a href="/register">Crear cuenta</a>
-      <a href="/reset-password">Olvidé mi contraseña</a>
+      <!-- Luego haremos reset-password -->
+      <!-- <a href="/reset-password">Olvidé mi contraseña</a> -->
     </div>
   </form>
 </section>
@@ -91,10 +82,6 @@
     color: #fff;
     font-weight: 700;
     cursor: pointer;
-  }
-  button:disabled {
-    opacity: 0.6;
-    cursor: default;
   }
   .error {
     color: #b00020;

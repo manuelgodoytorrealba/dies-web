@@ -8,19 +8,17 @@ export const handle: Handle = async ({ event, resolve }) => {
     PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        get(name) {
-          return event.cookies.get(name);
-        },
-        set(name, value, options) {
+        get: (name) => event.cookies.get(name),
+        set: (name, value, options) => {
           event.cookies.set(name, value, {
             ...options,
-            path: options?.path ?? '/' // <- FIX CLAVE
+            path: options?.path ?? '/' // 👈 importante
           });
         },
-        remove(name, options) {
+        remove: (name, options) => {
           event.cookies.delete(name, {
             ...options,
-            path: options?.path ?? '/' // <- FIX CLAVE
+            path: options?.path ?? '/' // 👈 importante
           });
         }
       }
@@ -29,7 +27,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   event.locals.supabase = supabase;
 
-  // helper opcional por si lo quieres usar en rutas
   event.locals.getSession = async () => {
     const { data } = await supabase.auth.getSession();
     return data.session;

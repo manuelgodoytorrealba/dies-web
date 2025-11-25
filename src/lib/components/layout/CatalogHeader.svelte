@@ -1,28 +1,23 @@
+<!-- src/lib/components/layout/CatalogHeader.svelte -->
 <script lang="ts">
-  // Más adelante aquí podremos leer la sesión global si quieres
-  // import { sessionStore } from '$lib/stores/sessions';
-  // $: session = $sessionStore;
+  import type { Session } from '@supabase/supabase-js';
+
+  // la sesión puede ser Session o null
+  export let session: Session | null = null;
 </script>
 
 <header class="catalog-header">
-  <div class="left">
-    <h1 class="title">Dies</h1>
-  </div>
+  <h1 class="title">DIES</h1>
 
-  <nav class="right">
-    <a class="link" href="/login">Login</a>
-    <a class="link primary" href="/register">Register</a>
-<!-- 
-    {/**
-     * Cuando arreglemos el layout global:
-     *
-     * {#if session}
-     *   <a class="link" href="/logout">Logout</a>
-     * {:else}
-     *   <a class="link" href="/login">Login</a>
-     *   <a class="link primary" href="/register">Register</a>
-     * {/if}
-     */} -->
+  <nav>
+    {#if session}
+      <form method="POST" action="/logout">
+        <button type="submit">Logout</button>
+      </form>
+    {:else}
+      <a href="/login">Login</a>
+      <a class="primary" href="/register">Register</a>
+    {/if}
   </nav>
 </header>
 
@@ -46,13 +41,14 @@
     letter-spacing: -0.5px;
   }
 
-  .right {
+  nav {
     display: flex;
     gap: 10px;
     align-items: center;
   }
 
-  .link {
+  a,
+  button {
     padding: 8px 14px;
     border-radius: 999px;
     border: 1px solid #111;
@@ -62,9 +58,11 @@
     color: #111;
     background: transparent;
     transition: 0.15s;
+    cursor: pointer;
   }
 
-  .link:hover {
+  a:hover,
+  button:hover {
     background: #f5f5f5;
   }
 

@@ -12,39 +12,51 @@
   async function onRegister() {
     errorMsg = '';
     successMsg = '';
-
-    if (!email || !password) {
-      errorMsg = 'Completa email y contraseña.';
-      return;
-    }
-    if (password !== confirmPassword) {
-      errorMsg = 'Las contraseñas no coinciden.';
-      return;
-    }
-
     loading = true;
 
-    const { error } = await supabaseBrowser.auth.signUp({
+    if (!email || !password || !confirmPassword) {
+      errorMsg = 'Rellena todos los campos.';
+      loading = false;
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      errorMsg = 'Las contraseñas no coinciden.';
+      loading = false;
+      return;
+    }
+
+    const { data, error } = await supabaseBrowser.auth.signUp({
       email,
-      password,
-      options: {
-        // a dónde vuelve Supabase cuando confirma email
-        emailRedirectTo: `${window.location.origin}/catalog`
-      }
+      password
     });
 
     loading = false;
 
+    // 1) Error “clásico” de Supabase
     if (error) {
-      errorMsg = error.message;
+      if (error.code === 'user_already_exists') {
+        errorMsg = 'Ya existe una cuenta con este correo. Ve a Iniciar sesión.';
+      } else {
+        errorMsg = error.message;
+      }
       return;
     }
 
-    successMsg =
-      'Cuenta creada. Revisa tu correo y confirma para entrar.';
-    
-    // opcional: si quieres mandarlo directo a login
-    // await goto('/login');
+    // 2) Caso “raro” de Supabase: no hay error pero el usuario ya existía
+    const alreadyRegistered =
+      data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
+
+    if (alreadyRegistered) {
+      errorMsg = 'Ya tienes una cuenta con este correo. Ve a Iniciar sesión.';
+      return;
+    }
+
+    // 3) Registro correcto
+    successMsg = `Cuenta creada. Revisa tu correo (${email}) y confirma para poder entrar.`;
+
+    // Si quieres redirigir al login después de unos segundos:
+    // setTimeout(() => goto('/login'), 2000);
   }
 </script>
 
@@ -54,28 +66,29 @@
   <div class="card">
     <label>
       Email
-      <input type="email" bind:value={email} placeholder="tu@email.com" />
+      <input type="email" bind:value={email} />
     </label>
 
     <label>
       Contraseña
-      <input type="password" bind:value={password} placeholder="••••••••" />
+      <input type="password" bind:value={password} />
     </label>
 
     <label>
-      Confirmar contraseña
-      <input type="password" bind:value={confirmPassword} placeholder="••••••••" />
+      Repite la contraseña
+      <input type="password" bind:value={confirmPassword} />
     </label>
 
     {#if errorMsg}
       <p class="error">{errorMsg}</p>
     {/if}
+
     {#if successMsg}
       <p class="success">{successMsg}</p>
     {/if}
 
     <button on:click={onRegister} disabled={loading}>
-      {loading ? 'Creando...' : 'Crear cuenta'}
+      {loading ? 'Creando cuenta...' : 'Crear cuenta'}
     </button>
 
     <div class="links">
@@ -92,6 +105,6 @@
   button { padding:10px 12px; border-radius:10px; border:1px solid #444; background:#111; color:#fff; font-weight:700; cursor:pointer; }
   button:disabled { opacity:.6; cursor:default; }
   .error { color:#b00020; font-size:14px; }
-  .success { color:#0a7a2f; font-size:14px; }
-  .links { display:flex; justify-content:center; font-size:14px; margin-top:6px; }
+  .success { color:#0a7b28; font-size:14px; }
+  .links { display:flex; justify-content:space-between; font-size:14px; }
 </style>
