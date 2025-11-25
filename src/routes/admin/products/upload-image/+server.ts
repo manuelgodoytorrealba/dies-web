@@ -1,10 +1,5 @@
-// src/routes/admin/products/upload-image/+server.ts
-import { error, json } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import { error, json, type RequestHandler } from '@sveltejs/kit';
 import { supabaseAdmin } from '$lib/server/supabase';
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const POST: RequestHandler = async ({ request }) => {
   const formData = await request.formData();
@@ -22,54 +17,42 @@ export const POST: RequestHandler = async ({ request }) => {
     throw error(400, 'Falta product_id');
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw error(400, 'Formato no permitido. Usa JPG, PNG o WEBP.');
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw error(400, 'La imagen no puede superar los 5MB.');
-  }
-
   const ext = file.name.split('.').pop() || 'jpg';
   const fileName = `${crypto.randomUUID()}.${ext}`;
   const path = folder ? `${folder}/${fileName}` : fileName;
 
-  // 1) Subir al bucket de Storage
-  const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+  // 1) Subir al bucket
+  const { data, error: uploadError } = await supabaseAdmin.storage
     .from(bucket)
     .upload(path, file, {
       cacheControl: '3600',
       upsert: false
     });
 
-  if (uploadError || !uploadData) {
+  if (uploadError || !data) {
     console.error('[upload-image] upload error', uploadError);
     throw error(500, 'No se pudo subir la imagen a storage');
   }
 
-  // 2) Obtener URL pública
+  // 2) URL pública
   const { data: publicData } = supabaseAdmin.storage
     .from(bucket)
-    .getPublicUrl(uploadData.path);
+    .getPublicUrl(data.path);
 
   const publicUrl = publicData.publicUrl;
 
-  // 3) Calcular siguiente orden para este producto
-  const { data: existing, error: existingError } = await supabaseAdmin
+  // 3) Calcular orden siguiente
+  const { data: existing } = await supabaseAdmin
     .from('product_images')
     .select('orden')
-    .eq('product_id', productId);
-
-  if (existingError) {
-    console.error('[upload-image] existing images error', existingError);
-  }
+    .eq('product_id', productId)
+    .order('orden', { ascending: false })
+    .limit(1);
 
   const nextOrden =
-    existing && existing.length
-      ? Math.max(...existing.map((img) => img.orden ?? 0)) + 1
-      : 0;
+    existing && existing.length ? (existing[0].orden ?? 0) + 1 : 0;
 
-  // 4) Insertar en tabla product_images
+  // 4) Insertar en product_images
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from('product_images')
     .insert({
@@ -77,7 +60,7 @@ export const POST: RequestHandler = async ({ request }) => {
       url: publicUrl,
       orden: nextOrden
     })
-    .select('id, url, orden')
+    .select('id')
     .single();
 
   if (insertError || !inserted) {
@@ -85,9 +68,19 @@ export const POST: RequestHandler = async ({ request }) => {
     throw error(500, 'No se pudo registrar la imagen en product_images');
   }
 
-  return json({
-    url: inserted.url,
-    id: inserted.id,
-    orden: inserted.orden
-  });
+  // 5) Si el producto no tiene imagen_url, usar esta como portada
+  const { data: product, error: productError } = await supabaseAdmin
+    .from('products')
+    .select('imagen_url')
+    .eq('product_id', productId)
+    .single();
+
+  if (!productError && (!product?.imagen_url || product.imagen_url === '')) {
+    await supabaseAdmin
+      .from('products')
+      .update({ imagen_url: publicUrl })
+      .eq('product_id', productId);
+  }
+
+  return json({ url: publicUrl, id: inserted.id });
 };

@@ -1,17 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
 
-  // ✅ props
   export let imageUrl: string = '';
   export let productId: string | null = null;
-
-  // los dos de abajo son opcionales, pero así no te marca error al pasarlos
   export let bucket: string = 'productos';
   export let folder: string | null = null;
 
-  const dispatch = createEventDispatcher<{
-    uploaded: { url: string; id: string };
-  }>();
+  const dispatch = createEventDispatcher<{ uploaded: { url: string; id?: string } }>();
 
   let uploading = false;
   let errorMsg = '';
@@ -22,7 +17,6 @@
 
     errorMsg = '';
 
-    // ⚠️ Validar tipo (decidimos usar solo estos formatos)
     const allowed = ['image/jpeg', 'image/png', 'image/webp'];
     if (!allowed.includes(file.type)) {
       errorMsg = 'Solo se permiten imágenes JPG, PNG o WEBP.';
@@ -53,14 +47,12 @@
       if (!res.ok || !json.url) {
         console.error('[ImageUploader] upload error', json);
         errorMsg = json.error ?? 'No se pudo subir la imagen.';
+        uploading = false;
         return;
       }
 
-      // URL principal (si lo usas con bind:imageUrl)
       imageUrl = json.url;
-
-      // ✅ avisamos al padre para que refresque la galería
-      dispatch('uploaded', { url: json.url, id: json.id });
+      dispatch('uploaded', { url: json.url, id: json.id as string | undefined });
     } catch (err) {
       console.error('[ImageUploader] unexpected error', err);
       errorMsg = 'No se pudo subir la imagen.';
@@ -103,9 +95,9 @@
         Arrastra una imagen aquí o haz clic para seleccionarla
       {/if}
     </p>
- <p class="hint">
-  Recomendado: WEBP o JPG, cuadrado (~1200×1200px, máx. 1MB).
-</p>
+    <p class="hint">
+      Recomendado: WEBP o JPG, cuadrado (~1200x1200px), máx. 1 MB.
+    </p>
   </label>
 
   {#if errorMsg}
@@ -123,7 +115,6 @@
     flex-direction: column;
     gap: 6px;
   }
-
   .dropzone {
     border: 1px dashed #999;
     border-radius: 12px;
@@ -133,24 +124,8 @@
     font-size: 14px;
     background: #fafafa;
   }
-
-  .dropzone:hover {
-    background: #f3f3f3;
-  }
-
-  .hint {
-    margin-top: 8px;
-    font-size: 12px;
-    opacity: 0.7;
-  }
-
-  .error {
-    color: #b00020;
-    font-size: 13px;
-  }
-
-  .small {
-    font-size: 13px;
-    opacity: 0.8;
-  }
+  .dropzone:hover { background: #f3f3f3; }
+  .hint { margin-top: 8px; font-size: 11px; opacity: 0.7; }
+  .error { color: #b00020; font-size: 13px; }
+  .small { font-size: 13px; opacity: 0.8; }
 </style>

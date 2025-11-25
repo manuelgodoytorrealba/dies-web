@@ -12,6 +12,8 @@ const DESC_COL = 'descripcion';
 const BRAND_COL = 'marca';
 const SLUG_COL = 'slug';
 
+
+
 /**
  * Normaliza errores de Supabase a un formato simple.
  */
@@ -126,6 +128,7 @@ export async function createProduct(payload: Record<string, any>) {
   return data;
 }
 
+
 /**
  * Actualizar producto (solo admin).
  */
@@ -144,20 +147,60 @@ export async function updateProduct(id: string, patch: Record<string, any>) {
 /**
  * Borrar producto (solo admin).
  */
-export async function deleteProduct(id: string) {
-  // 1. eliminar leads relacionados
-  await supabaseAdmin.from('leads').delete().eq('product_id', id);
+export async function deleteProduct(productId: string) {
+  try {
+    const bucket = 'productos';
 
-  // 2. eliminar imágenes
-  await supabaseAdmin.from('product_images').delete().eq('product_id', id);
+    // 1) Leer URLs de las imágenes asociadas
+    const { data: images, error: imgError } = await supabaseAdmin
+      .from('product_images')
+      .select('url')
+      .eq('product_id', productId);
 
-  // 3. eliminar producto
-  const { error } = await supabaseAdmin
-    .from('products')
-    .delete()
-    .eq('product_id', id);
+    if (imgError) {
+      console.error('[db-repo/deleteProduct] error obteniendo imágenes', imgError);
+    } else if (images && images.length > 0) {
+      const paths = images
+        .map((img) => {
+          try {
+            const u = new URL(img.url);
+            const marker = `/storage/v1/object/public/${bucket}/`;
+            const idx = u.pathname.indexOf(marker);
+            if (idx === -1) return null;
+            return u.pathname.slice(idx + marker.length);
+          } catch {
+            return null;
+          }
+        })
+        .filter((p): p is string => !!p);
 
-  if (error) handleError('deleteProduct', error);
+      if (paths.length) {
+        const { error: rmError } = await supabaseAdmin.storage
+          .from(bucket)
+          .remove(paths);
+
+        if (rmError) {
+          console.error(
+            '[db-repo/deleteProduct] error eliminando del storage',
+            rmError
+          );
+        }
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from('products')
+      .delete()
+      .eq('product_id', productId);
+
+    if (error) {
+      // 👇 aquí estaba el problema, ya corregido
+      handleError('deleteProduct', error);
+    }
+  } catch (err) {
+    console.error('[db-repo/deleteProduct] unexpected', err);
+    throw new Error('Database error in deleteProduct');
+  }
 }
 
 // --- GALERÍA DE IMÁGENES POR PRODUCTO ------------------------
