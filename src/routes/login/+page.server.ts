@@ -1,32 +1,41 @@
+// src/routes/login/+page.server.ts
+import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { fail, redirect } from '@sveltejs/kit';
 
 export const load: PageServerLoad = async ({ locals }) => {
   const session = await locals.getSession();
+
+  // Si ya está logado, lo mandamos al catálogo
   if (session) {
     throw redirect(302, '/catalog');
   }
+
   return {};
 };
 
 export const actions: Actions = {
   default: async ({ request, locals }) => {
-    const formData = await request.formData();
-    const email = String(formData.get('email') ?? '');
-    const password = String(formData.get('password') ?? '');
+    const form = await request.formData();
+    const email = String(form.get('email') ?? '');
+    const password = String(form.get('password') ?? '');
 
-    const { error } = await locals.supabase.auth.signInWithPassword({
+    if (!email || !password) {
+      return fail(400, { message: 'Email y contraseña son obligatorios' });
+    }
+
+    const { data, error } = await locals.supabase.auth.signInWithPassword({
       email,
       password
     });
 
     if (error) {
-      return fail(400, {
-        error: error.message,
-        email
-      });
+      console.error('[login] error', error);
+      return fail(400, { message: 'Email o contraseña incorrectos' });
     }
 
-    throw redirect(302, '/catalog');
+    console.log('[login] usuario logado:', data.session?.user?.email);
+
+    // Redirige al catálogo (el header ya mostrará Logout gracias al layout)
+    throw redirect(303, '/catalog');
   }
 };

@@ -26,7 +26,7 @@ export async function getProducts() {
     .from(PRODUCTS_TABLE)
     .select('*')
     .eq('published', true)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false }); // 👈 NUEVO ORDEN GLOBAL
 
   if (error) handleError('getProducts', error);
   return data ?? [];
@@ -34,6 +34,7 @@ export async function getProducts() {
 
 /**
  * Obtener un producto por product_id.
+ * NO filtra por published, porque el admin puede ver borradores.
  */
 export async function getProductById(id: string) {
   const { data, error } = await supabasePublic
@@ -48,7 +49,6 @@ export async function getProductById(id: string) {
 
 /**
  * Obtener un producto por slug.
- * (Esto te viene brutal para rutas limpias luego)
  */
 export async function getProductBySlug(slug: string) {
   const { data, error } = await supabasePublic
@@ -62,7 +62,7 @@ export async function getProductBySlug(slug: string) {
 }
 
 /**
- * Obtener productos por marca (filtro).
+ * Obtener productos por marca (solo los publicados).
  */
 export async function getProductsByBrand(brand: string) {
   const b = brand.trim();
@@ -71,7 +71,7 @@ export async function getProductsByBrand(brand: string) {
   const { data, error } = await supabasePublic
     .from(PRODUCTS_TABLE)
     .select('*')
-    .ilike(BRAND_COL, `%${b}%`)          // 👈 case-insensitive exact match
+    .ilike(BRAND_COL, `%${b}%`)
     .eq('published', true)
     .order('created_at', { ascending: false });
 
@@ -80,7 +80,7 @@ export async function getProductsByBrand(brand: string) {
 }
 
 /**
- * Buscar productos por nombre o descripción.
+ * Buscar productos en catálogo (publicados).
  */
 export async function searchProducts(query: string) {
   const q = query.trim();
@@ -104,11 +104,19 @@ export async function searchProducts(query: string) {
 
 /**
  * Crear producto (solo admin).
+ * Por defecto:
+ *  published = false
  */
 export async function createProduct(payload: Record<string, any>) {
+  const finalPayload = {
+    ...payload,
+    published: false, // 👈 NUEVO: protege el catálogo
+    created_at: new Date().toISOString()
+  };
+
   const { data, error } = await supabaseAdmin
     .from(PRODUCTS_TABLE)
-    .insert(payload)
+    .insert(finalPayload)
     .select('*')
     .single();
 
@@ -141,5 +149,40 @@ export async function deleteProduct(id: string) {
     .eq(ID_COL, id);
 
   if (error) handleError('deleteProduct', error);
+  return true;
+}
+
+// --- GALERÍA DE IMÁGENES POR PRODUCTO ------------------------
+
+export async function getProductImages(productId: string) {
+  const { data, error } = await supabasePublic
+    .from('product_images')
+    .select('*')
+    .eq('product_id', productId)
+    .order('orden', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) handleError('getProductImages', error);
+  return data ?? [];
+}
+
+export async function addProductImage(productId: string, url: string) {
+  const { data, error } = await supabaseAdmin
+    .from('product_images')
+    .insert({ product_id: productId, url })
+    .select('*')
+    .single();
+
+  if (error) handleError('addProductImage', error);
+  return data;
+}
+
+export async function deleteProductImage(id: string) {
+  const { error } = await supabaseAdmin
+    .from('product_images')
+    .delete()
+    .eq('id', id);
+
+  if (error) handleError('deleteProductImage', error);
   return true;
 }

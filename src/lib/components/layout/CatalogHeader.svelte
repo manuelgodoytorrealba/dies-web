@@ -1,22 +1,21 @@
-<!-- src/lib/components/layout/CatalogHeader.svelte -->
 <script lang="ts">
-  import type { Session } from '@supabase/supabase-js';
+  import type { User } from '@supabase/supabase-js';
 
-  // la sesión puede ser Session o null
-  export let session: Session | null = null;
+  // user viene de +layout.server.ts
+  export let user: User | null = null;
 </script>
 
 <header class="catalog-header">
   <h1 class="title">DIES</h1>
 
   <nav>
-    {#if session}
+    {#if user}
       <form method="POST" action="/logout">
-        <button type="submit">Logout</button>
+        <button type="submit" class="link">Logout</button>
       </form>
     {:else}
-      <a href="/login">Login</a>
-      <a class="primary" href="/register">Register</a>
+      <a class="link" href="/login">Login</a>
+      <a class="link primary" href="/register">Register</a>
     {/if}
   </nav>
 </header>
@@ -47,8 +46,7 @@
     align-items: center;
   }
 
-  a,
-  button {
+  .link {
     padding: 8px 14px;
     border-radius: 999px;
     border: 1px solid #111;
@@ -58,11 +56,9 @@
     color: #111;
     background: transparent;
     transition: 0.15s;
-    cursor: pointer;
   }
 
-  a:hover,
-  button:hover {
+  .link:hover {
     background: #f5f5f5;
   }
 
