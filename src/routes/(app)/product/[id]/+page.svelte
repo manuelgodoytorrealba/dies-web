@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import WhatsAppButton from '../../catalog/WhatsAppButton.svelte';
 
   export let data: PageData;
 
@@ -97,7 +98,7 @@
       {#if p.descripcion}
         <p class="description">{p.descripcion}</p>
       {/if}
-      <!-- aquí iría botón de WhatsApp, añadir a wishlist, etc -->
+     <WhatsAppButton product={p} />
     </div>
   </div>
 </section>
