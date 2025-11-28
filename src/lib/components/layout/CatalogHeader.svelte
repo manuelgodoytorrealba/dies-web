@@ -7,7 +7,7 @@
 <header class="app-header">
   <div class="app-header__inner flex-between">
     <div class="app-header__brand">
-      <h1 class="app-header__title">DIES</h1>
+      <a href="/profile" class="app-header__title">DIES</a>
     </div>
 
     <div class="app-header__logo">
@@ -47,6 +47,7 @@
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    color: black;
   }
 
   .app-header__logo img {

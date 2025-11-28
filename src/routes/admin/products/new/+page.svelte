@@ -154,6 +154,7 @@
 		gap: 6px;
 		font-weight: 600;
 		font-size: 14px;
+		color: black;
 	}
 	input,
 	textarea {

@@ -21,7 +21,7 @@
     <div class="profile-card__body">
   <div class="profile-field">
     <label for="email">Email</label>
-    <input id="email" type="email" value={email} readonly />
+    <input class="email" id="email" type="email" value={email} readonly />
   </div>
 
   <div class="profile-field">
@@ -69,7 +69,9 @@
     justify-content: center;
     padding: var(--space-6) var(--space-4);
   }
-
+.email{
+color: black !important;
+}
   .profile-card {
     width: 100%;
     max-width: 520px;
@@ -87,6 +89,7 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-bottom: var(--space-2);
+    
   }
 
   .profile-subtitle {
@@ -116,7 +119,7 @@
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border-subtle);
     background-color: var(--color-surface);
-    color: var(--color-text);
+    color: var(--color-text-muted);
     font-size: var(--text-sm);
     font-family: var(--font-sans);
     resize: vertical;

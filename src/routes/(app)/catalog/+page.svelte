@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { PageData } from './$types';
-
+  import ProductCard from '$lib/components/catalog/ProductCard.svelte';
   import FiltersBar from '$lib/components/filters/FiltersBar.svelte';
   import { filtersStore } from '$lib/stores/filters';
   import type { Product } from '$lib/types/product';
@@ -128,20 +128,12 @@ function loadMore() {
   {#if visible.length === 0}
     <p>No hay productos con esos filtros.</p>
   {:else}
-    <div class="grid">
-      {#each visible as p}
-        <article class="card">
-          <a href={`/product/${p.product_id}`}>
-            <img src={p.imagen_url ?? ''} alt={p.nombre} />
-            <h2>{p.nombre}</h2>
-          </a>
 
-          <p class="brand">{p.marca}</p>
-          <p class="price">€{p.precio_publicado}</p>
-          <p class="size">Talla {p.talla}</p>
-        </article>
-      {/each}
-    </div>
+    <div class="grid">
+  {#each visible as p}
+    <ProductCard product={p} />
+  {/each}
+</div>
 
     {#if hasMore}
       <div bind:this={sentinel} class="sentinel">
@@ -163,41 +155,6 @@ function loadMore() {
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 16px;
     margin-top: 16px;
-  }
-
-  .card {
-    border: 1px solid #eee;
-    border-radius: 12px;
-    padding: 12px;
-    background: white;
-  }
-
-  img {
-    width: 100%;
-    height: 180px;
-    object-fit: contain;
-    border-radius: 8px;
-    background: #fafafa;
-  }
-
-  h2 {
-    font-size: 16px;
-    margin: 8px 0 4px;
-  }
-
-  .brand {
-    opacity: 0.7;
-    font-size: 14px;
-  }
-
-  .price {
-    font-weight: 600;
-    margin-top: 4px;
-  }
-
-  .size {
-    font-size: 13px;
-    opacity: 0.8;
   }
 
   .sentinel {
