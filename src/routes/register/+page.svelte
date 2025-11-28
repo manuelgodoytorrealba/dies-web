@@ -100,7 +100,7 @@
 <style>
   .auth { padding: 32px; display:flex; flex-direction:column; align-items:center; gap:16px; }
   .card { width: 320px; border:1px solid #ddd; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px; background:#fff; }
-  label { display:flex; flex-direction:column; gap:6px; font-weight:600; }
+  label { display:flex; flex-direction:column; gap:6px; font-weight:600;color: #111; }
   input { padding:10px 12px; border-radius:10px; border:1px solid #444; }
   button { padding:10px 12px; border-radius:10px; border:1px solid #444; background:#111; color:#fff; font-weight:700; cursor:pointer; }
   button:disabled { opacity:.6; cursor:default; }

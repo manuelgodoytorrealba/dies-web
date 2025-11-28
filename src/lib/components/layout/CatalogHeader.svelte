@@ -1,73 +1,75 @@
 <script lang="ts">
   import type { User } from '@supabase/supabase-js';
-
-  // user viene de +layout.server.ts
   export let user: User | null = null;
+  import logo from '$lib/assets/logo.svg';
 </script>
 
-<header class="catalog-header">
-  <h1 class="title">DIES</h1>
+<header class="app-header">
+  <div class="app-header__inner flex-between">
+    <div class="app-header__brand">
+      <h1 class="app-header__title">DIES</h1>
+    </div>
 
-  <nav>
-    {#if user}
-      <form method="POST" action="/logout">
-        <button type="submit" class="link">Logout</button>
-      </form>
-    {:else}
-      <a class="link" href="/login">Login</a>
-      <a class="link primary" href="/register">Register</a>
-    {/if}
-  </nav>
+    <div class="app-header__logo">
+      <img src={logo} alt="logo-dies" />
+    </div>
+
+    <nav class="app-header__nav">
+      {#if user}
+        <form method="POST" action="/logout">
+          <button type="submit" class="btn">Logout</button>
+        </form>
+      {:else}
+        <a class="btn" href="/login">Login</a>
+        <a class="btn" href="/register">Register</a>
+      {/if}
+    </nav>
+  </div>
 </header>
 
 <style>
-  .catalog-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 24px 8px;
+  .app-header {
     position: sticky;
     top: 0;
-    background: white;
-    z-index: 5;
-    border-bottom: 1px solid #eee;
+    z-index: 10;
+    border-bottom: 1px solid var(--color-border-subtle);
+    background-color: var(--color-bg);
   }
 
-  .title {
-    font-size: 32px;
-    font-weight: 800;
-    margin: 0;
-    letter-spacing: -0.5px;
-  }
-
-  nav {
-    display: flex;
-    gap: 10px;
+  .app-header__inner {
+    padding: var(--space-3) var(--space-4);
+    gap: var(--space-4);
     align-items: center;
   }
 
-  .link {
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 1px solid #111;
-    text-decoration: none;
+  .app-header__title {
+    font-size: var(--text-2xl);
     font-weight: 600;
-    font-size: 14px;
-    color: #111;
-    background: transparent;
-    transition: 0.15s;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
   }
 
-  .link:hover {
-    background: #f5f5f5;
+  .app-header__logo img {
+    margin-left: 130px;
+    width: 4.5rem;
+    height: 3.5rem;
+    border-radius: var(--radius-lg);
+    object-fit: contain;
   }
 
-  .primary {
-    background: #111;
-    color: white;
+  .app-header__nav {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
-  .primary:hover {
-    opacity: 0.8;
+  @media (max-width: 768px) {
+    .app-header__inner {
+      gap: var(--space-3);
+    }
+
+    .app-header__logo {
+      display: none;
+    }
   }
 </style>
