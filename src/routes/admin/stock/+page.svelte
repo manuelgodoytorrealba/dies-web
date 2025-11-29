@@ -1,332 +1,451 @@
 <script lang="ts">
-  import type { PageData } from './$types';
+	import type { PageData } from './$types';
 
-  export let data: PageData;
+	export let data: PageData;
 
-  type StockRow = {
-    product_id: string;
-    modelo_slug: string | null;
-    nombre: string;
-    marca: string;
-    talla: string | number | null;
-    stock: number | null;
-    status_producto: string;
-    published: boolean;
-    created_at: string;
-  };
+	type StockRow = {
+		product_id: string;
+		modelo_slug: string | null;
+		nombre: string;
+		marca: string;
+		talla: string | number | null;
+		stock: number;
+		status_producto: string | null;
+		published: boolean;
+	};
 
-  // 👇 Arreglo del error de tipos
-  const rawItems = (data as any)?.items ?? [];
-  const items: StockRow[] = Array.isArray(rawItems) ? (rawItems as StockRow[]) : [];
+	const rawItems: any[] = data.items ?? [];
 
+	// Normalizamos para asegurarnos de que stock sea número
+	let rows: StockRow[] = rawItems.map((r) => ({
+		product_id: r.product_id,
+		modelo_slug: r.modelo_slug,
+		nombre: r.nombre,
+		marca: r.marca,
+		talla: r.talla,
+		stock: Number(r.stock ?? 0),
+		status_producto: r.status_producto ?? 'disponible',
+		published: !!r.published
+	}));
 
-  let query = '';
+	// Filtros básicos
+	let query = '';
+	let stateFilter = 'all';
+	let brandFilter = 'all';
 
-  // Filtro simple por texto (modelo, nombre, marca, talla)
-  $: normalizedQuery = query.trim().toLowerCase();
+	$: filteredRows = rows
+		.filter((r) => {
+			if (!query) return true;
+			const q = query.toLowerCase();
+			return (
+				(r.modelo_slug ?? '').toLowerCase().includes(q) ||
+				r.nombre.toLowerCase().includes(q) ||
+				r.marca.toLowerCase().includes(q) ||
+				String(r.talla ?? '').includes(q)
+			);
+		})
+		.filter((r) => (stateFilter === 'all' ? true : (r.status_producto ?? '') === stateFilter))
+		.filter((r) =>
+			brandFilter === 'all' ? true : r.marca.toLowerCase() === brandFilter.toLowerCase()
+		);
 
-  $: filtered =
-    normalizedQuery === ''
-      ? items
-      : items.filter((row) => {
-          const haystack = [
-            row.modelo_slug ?? '',
-            row.nombre ?? '',
-            row.marca ?? '',
-            row.talla ?? ''
-          ]
-            .join(' ')
-            .toLowerCase();
+	// Métricas rápidas
+	$: totalPairs = rows.length;
+	$: totalUnits = rows.reduce((acc, r) => acc + (r.stock ?? 0), 0);
+	$: activeUnits = rows
+		.filter((r) => r.status_producto === 'disponible' && r.published)
+		.reduce((acc, r) => acc + (r.stock ?? 0), 0);
 
-          return haystack.includes(normalizedQuery);
-        });
+	async function patchProduct(id: string, patch: Partial<StockRow>) {
+		try {
+			const res = await fetch(`/api/products/${id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(patch)
+			});
 
-  // Pequeña etiqueta de estado
-  function statusLabel(row: StockRow) {
-    if (!row.published) return 'Borrador';
-    if (row.status_producto === 'agotado') return 'Agotado';
-    if ((row.stock ?? 0) <= 0) return 'Sin stock';
-    return 'Activo';
-  }
+			const json = await res.json().catch(() => ({}));
 
-  function statusClass(row: StockRow) {
-    if (!row.published) return 'badge badge--draft';
-    if (row.status_producto === 'agotado' || (row.stock ?? 0) <= 0)
-      return 'badge badge--danger';
-    return 'badge badge--ok';
-  }
+			if (!res.ok || (json && (json as any).ok === false)) {
+				console.error('[stock] error PATCH', json);
+				alert('No se pudo guardar el cambio de stock/estado.');
+			}
+		} catch (err) {
+			console.error('[stock] patchProduct error', err);
+			alert('Error de red al guardar el stock.');
+		}
+	}
+
+	function updateRowLocally(id: string, patch: Partial<StockRow>) {
+		rows = rows.map((r) =>
+			r.product_id === id
+				? {
+						...r,
+						...patch
+					}
+				: r
+		);
+	}
+
+	function changeStock(row: StockRow, delta: number) {
+		const current = Number(row.stock ?? 0);
+		const next = Math.max(0, current + delta);
+		if (next === current) return;
+
+		// actualizamos UI (inmutable)
+		updateRowLocally(row.product_id, { stock: next });
+
+		// guardamos en backend
+		patchProduct(row.product_id, { stock: next });
+	}
+
+	function handleStockInput(row: StockRow, value: string) {
+		const parsed = Number(value);
+		if (Number.isNaN(parsed) || parsed < 0) return;
+
+		updateRowLocally(row.product_id, { stock: parsed });
+		patchProduct(row.product_id, { stock: parsed });
+	}
+
+	async function handleStatusChange(row: StockRow, value: string) {
+		updateRowLocally(row.product_id, { status_producto: value });
+		await patchProduct(row.product_id, { status_producto: value });
+	}
+
+	async function handlePublishedToggle(row: StockRow) {
+		const next = !row.published;
+		updateRowLocally(row.product_id, { published: next });
+		await patchProduct(row.product_id, { published: next });
+	}
 </script>
 
-<section class="stock">
-  <header class="stock__header">
-    <div>
-      <h1>📦 Stock</h1>
-      <p>Resumen de stock por modelo y talla. Editas cada fila desde productos.</p>
-    </div>
+<section class="stock-page">
+	<header class="stock-header">
+		<div>
+			<h1>📦 Stock</h1>
+			<p>Resumen de stock por modelo y talla. Editas cada fila desde aquí.</p>
+		</div>
 
-    <div class="stock__search">
-      <input
-        type="search"
-        placeholder="Buscar por modelo, marca o talla…"
-        bind:value={query}
-      />
-      <span class="stock__count">
-        {filtered.length} filas
-      </span>
-    </div>
-  </header>
+		<div class="metrics">
+			<div class="metric">
+				<span class="metric-label">Modelos / tallas</span>
+				<span class="metric-value">{totalPairs}</span>
+			</div>
+			<div class="metric">
+				<span class="metric-label">Unidades totales</span>
+				<span class="metric-value">{totalUnits}</span>
+			</div>
+			<div class="metric">
+				<span class="metric-label">Unidades activas</span>
+				<span class="metric-value">{activeUnits}</span>
+			</div>
+		</div>
+	</header>
 
-  {#if filtered.length === 0}
-    <p class="stock__empty">No hay productos que coincidan con la búsqueda.</p>
-  {:else}
-    <div class="stock__table-wrapper">
-      <table class="stock__table">
-        <thead>
-          <tr>
-            <th>Modelo</th>
-            <th>Marca</th>
-            <th>Talla</th>
-            <th>Stock</th>
-            <th>Estado</th>
-            <th>Publicado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each filtered as row}
-            <tr>
-              <td class="col-model">
-                <div class="col-model__slug">
-                  <code>{row.modelo_slug ?? '—'}</code>
-                </div>
-                <div class="col-model__name">
-                  {row.nombre}
-                </div>
-              </td>
+	<div class="stock-toolbar">
+		<input
+			class="search"
+			type="search"
+			placeholder="Buscar por modelo, marca o talla"
+			bind:value={query}
+		/>
 
-              <td>{row.marca}</td>
+		<select bind:value={brandFilter}>
+			<option value="all">Todas las marcas</option>
+			<option value="Nike">Nike</option>
+			<option value="Adidas">Adidas</option>
+		</select>
 
-              <td class="col-size">
-                {row.talla ?? '—'}
-              </td>
+		<select bind:value={stateFilter}>
+			<option value="all">Todos los estados</option>
+			<option value="disponible">Solo disponibles</option>
+			<option value="agotado">Agotado</option>
+		</select>
+	</div>
 
-              <td class="col-stock">
-                {row.stock ?? 0}
-              </td>
+	<div class="table-wrapper">
+		<table class="stock-table">
+			<thead>
+				<tr>
+					<th>MODELO</th>
+					<th>MARCA</th>
+					<th>TALLA</th>
+					<th class="col-stock">STOCK</th>
+					<th>ESTADO</th>
+					<th>PUBLICADO</th>
+					<th>ACCIONES</th>
+				</tr>
+			</thead>
+			<tbody>
+				{#each filteredRows as row}
+					<tr>
+						<td>
+							<span class="modelo-pill">{row.modelo_slug}</span>
+							<div class="modelo-name">{row.nombre}</div>
+						</td>
+						<td>{row.marca}</td>
+						<td>{row.talla}</td>
 
-              <td>
-                <span class={statusClass(row)}>
-                  {statusLabel(row)}
-                </span>
-              </td>
+						<!-- STOCK -->
+						<td class="col-stock">
+							<div class="stock-control">
+								<button
+									type="button"
+									on:click={() => changeStock(row, -1)}
+									aria-label="Restar stock"
+								>
+									−
+								</button>
 
-              <td>
-                {#if row.published}
-                  <span class="pill pill--yes">Sí</span>
-                {:else}
-                  <span class="pill pill--no">No</span>
-                {/if}
-              </td>
+								<input
+									type="number"
+									min="0"
+									value={row.stock}
+									on:change={(e) =>
+										handleStockInput(row, (e.currentTarget as HTMLInputElement).value)}
+								/>
 
-              <td>
-                <a
-                  class="link-edit"
-                  href={`/admin/products/${row.product_id}`}
-                >
-                  Editar
-                </a>
-              </td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-    </div>
-  {/if}
+								<button type="button" on:click={() => changeStock(row, 1)} aria-label="Sumar stock">
+									+
+								</button>
+							</div>
+						</td>
+
+						<!-- ESTADO -->
+						<td>
+							<select
+								class="estado-select"
+								bind:value={row.status_producto}
+								on:change={(e) =>
+									handleStatusChange(row, (e.currentTarget as HTMLSelectElement).value)}
+							>
+								<option value="disponible">disponible</option>
+								<option value="agotado">agotado</option>
+								<option value="reservado">reservado</option>
+							</select>
+						</td>
+
+						<!-- PUBLICADO -->
+						<td>
+							<button
+								type="button"
+								class="published-pill"
+								class:published={row.published}
+								on:click={() => handlePublishedToggle(row)}
+							>
+								{row.published ? 'Sí' : 'No'}
+							</button>
+						</td>
+
+						<td>
+							<a href={`/admin/products/${row.product_id}`}>Editar</a>
+						</td>
+					</tr>
+				{/each}
+			</tbody>
+		</table>
+
+		<p class="table-footer">
+			{filteredRows.length} filas visibles
+		</p>
+	</div>
 </section>
 
 <style>
-  .stock {
-    padding: 24px;
-    max-width: 1100px;
-    margin: 0 auto;
-  }
+	.stock-page {
+		padding: 24px;
+		max-width: 1200px;
+		margin: 0 auto;
+	}
 
-  .stock__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
+	.stock-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: flex-end;
+		gap: 24px;
+		margin-bottom: 16px;
+	}
 
-  .stock__header h1 {
-    font-size: 24px;
-    margin-bottom: 4px;
-  }
+	.stock-header h1 {
+		font-size: 24px;
+		margin: 0 0 4px;
+	}
 
-  .stock__header p {
-    margin: 0;
-    font-size: 14px;
-    opacity: 0.8;
-  }
+	.stock-header p {
+		margin: 0;
+		font-size: 14px;
+		opacity: 0.8;
+	}
 
-  .stock__search {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
+	.metrics {
+		display: flex;
+		gap: 12px;
+	}
 
-  .stock__search input {
-    padding: 8px 10px;
-    border-radius: 999px;
-    border: 1px solid #ddd;
-    font-size: 14px;
-    min-width: 220px;
-  }
+	.metric {
+		padding: 8px 12px;
+		border-radius: 999px;
+		background: #f5f5f5;
+		font-size: 12px;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
 
-  .stock__count {
-    font-size: 13px;
-    opacity: 0.7;
-  }
+	.metric-label {
+		opacity: 0.7;
+	}
 
-  .stock__empty {
-    margin-top: 24px;
-    font-size: 14px;
-    opacity: 0.7;
-  }
+	.metric-value {
+		font-weight: 600;
+	}
 
-  .stock__table-wrapper {
-    margin-top: 12px;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    overflow: hidden;
-    background: #fff;
-  }
+	.stock-toolbar {
+		display: flex;
+		gap: 12px;
+		margin-bottom: 16px;
+		align-items: center;
+	}
 
-  .stock__table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
+	.stock-toolbar .search {
+		flex: 1;
+		border-radius: 999px;
+		border: 1px solid #ddd;
+		padding: 8px 12px;
+		font-size: 14px;
+	}
 
-  .stock__table thead {
-    background: #fafafa;
-  }
+	.stock-toolbar select {
+		border-radius: 999px;
+		border: 1px solid #ddd;
+		padding: 6px 10px;
+		font-size: 14px;
+		background: #fff;
+	}
 
-  .stock__table th,
-  .stock__table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid #f1f1f1;
-    text-align: left;
-  }
+	.table-wrapper {
+		border-radius: 16px;
+		overflow: hidden;
+		background: #fff;
+		box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+	}
 
-  .stock__table th {
-    font-weight: 600;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
+	.stock-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
 
-  .stock__table tbody tr:hover {
-    background: #fcfcfc;
-  }
+	.stock-table th,
+	.stock-table td {
+		padding: 10px 16px;
+		font-size: 14px;
+		border-bottom: 1px solid #eee;
+	}
 
-  .col-model {
-    max-width: 260px;
-  }
+	.stock-table thead {
+		background: #fafafa;
+		text-align: left;
+	}
 
-  .col-model__slug code {
-    font-size: 11px;
-    background: #f3f3f3;
-    padding: 2px 6px;
-    border-radius: 6px;
-  }
+	.col-stock {
+		text-align: center;
+		width: 180px;
+	}
 
-  .col-model__name {
-    margin-top: 4px;
-    font-weight: 500;
-  }
+	.modelo-pill {
+		display: inline-block;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: #f1f1f1;
+		font-size: 11px;
+		text-transform: lowercase;
+		opacity: 0.8;
+	}
 
-  .col-size,
-  .col-stock {
-    text-align: center;
-    width: 80px;
-  }
+	.modelo-name {
+		margin-top: 2px;
+	}
 
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 500;
-  }
+	.stock-control {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 3px 8px;
+		border-radius: 999px;
+		background: #f7f7f7;
+		border: 1px solid #e2e2e2;
+	}
 
-  .badge--ok {
-    background: #e7f8e9;
-    color: #0f7a28;
-  }
+	.stock-control button {
+		width: 24px;
+		height: 24px;
+		border-radius: 999px;
+		border: 1px solid #ddd;
+		background: #fff;
+		cursor: pointer;
+		font-size: 16px;
+		line-height: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
-  .badge--danger {
-    background: #fde8e8;
-    color: #b42318;
-  }
+	.stock-control input {
+		width: 40px;
+		border: none;
+		background: transparent;
+		text-align: center;
+		font-size: 14px;
+		padding: 0;
+	}
 
-  .badge--draft {
-    background: #f3f4ff;
-    color: #3730a3;
-  }
+	.stock-control input:focus {
+		outline: none;
+	}
 
-  .pill {
-    display: inline-flex;
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 500;
-  }
+	.estado-select {
+		border-radius: 999px;
+		border: 1px solid #ddd;
+		padding: 4px 8px;
+		font-size: 13px;
+		background: #fff;
+	}
 
-  .pill--yes {
-    background: #ecfdf3;
-    color: #166534;
-  }
+	.published-pill {
+		border-radius: 999px;
+		padding: 4px 10px;
+		border: 1px solid #ddd;
+		font-size: 13px;
+		background: #f5f5f5;
+		cursor: pointer;
+	}
 
-  .pill--no {
-    background: #f4f4f5;
-    color: #3f3f46;
-  }
+	.published-pill.published {
+		background: #e6f7ea;
+		border-color: #b8e3c2;
+	}
 
-  .link-edit {
-    font-size: 13px;
-    text-decoration: none;
-    color: #111;
-    border-bottom: 1px solid transparent;
-  }
+	.table-footer {
+		margin: 0;
+		padding: 8px 16px 10px;
+		font-size: 12px;
+		opacity: 0.7;
+	}
 
-  .link-edit:hover {
-    border-color: #111;
-  }
+	@media (max-width: 900px) {
+		.stock-header {
+			flex-direction: column;
+			align-items: flex-start;
+		}
 
-  @media (max-width: 768px) {
-    .stock {
-      padding: 16px;
-    }
+		.metrics {
+			width: 100%;
+			justify-content: flex-start;
+			flex-wrap: wrap;
+		}
 
-    .stock__header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .stock__search input {
-      min-width: 0;
-      width: 100%;
-    }
-
-    .stock__table {
-      font-size: 13px;
-    }
-
-    .stock__table-wrapper {
-      overflow-x: auto;
-    }
-  }
+		.col-stock {
+			width: 150px;
+		}
+	}
 </style>

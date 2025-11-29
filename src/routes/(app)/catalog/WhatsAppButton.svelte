@@ -42,7 +42,8 @@
           slug: product.slug,
           marca: product.marca,
           talla: product.talla,
-          precio_publicado: product.precio_publicado
+          precio_publicado: product.precio_publicado,
+          source_page: location.pathname  
         })
       });
     } catch (e) {

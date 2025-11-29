@@ -53,7 +53,7 @@
 	}
 
 	.app-header__logo img {
-		margin-left: 130px;
+		
 		width: 4.5rem;
 		height: 3.5rem;
 		border-radius: var(--radius-lg);

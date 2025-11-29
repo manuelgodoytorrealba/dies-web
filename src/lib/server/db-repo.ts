@@ -256,34 +256,38 @@ export async function getStockOverview() {
 
 // --- LEADS ----------------------------------------------------
 
+// Devuelve las filas tal cual están en la tabla `leads`
 export async function getLeads(limit = 200) {
-  // Traemos lead + datos básicos del producto asociado
-  const { data, error } = await supabasePublic
+  const { data, error } = await supabaseAdmin
     .from('leads')
     .select(
       `
-      lead_id,
-      product_id,
-      size,
-      status,
-      channel,
-      created_at,
-      notes,
-      products:product_id (
-        nombre,
-        marca,
-        precio_publicado
-      )
-    `
+        lead_id,
+        product_id,
+        size,
+        status,
+        channel,
+        created_at,
+        notes,
+        product_name_snapshot,
+        product_price_snapshot,
+        product_slug_snapshot,
+        source_page,
+        referer,
+        utm_source,
+        utm_medium,
+        utm_campaign
+      `
     )
     .order('created_at', { ascending: false })
     .limit(limit);
 
   if (error) {
     console.error('[db-repo/getLeads]', error);
-    throw new Error('Database error in getLeads');
+    return [];
   }
 
+  // IMPORTANTÍSIMO: aquí devolvemos tal cual
   return data ?? [];
 }
 

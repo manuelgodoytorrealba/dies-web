@@ -53,7 +53,7 @@
     padding: var(--space-3);
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border-subtle);
-    background-color: var(--color-surface);
+    background-color: #ffff;
     box-shadow: var(--shadow-soft);
     transition:
       transform var(--transition-fast),
@@ -88,7 +88,8 @@
     font-size: var(--text-xs);
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: var(--color-text-muted);
+    color: var(--color-text);
+    
   }
 
   .product-card__name {
@@ -101,14 +102,16 @@
   .product-card__meta {
     margin-top: var(--space-1);
     font-size: var(--text-xxs);
-    color: var(--color-text-muted);
+    color: var(--color-text);
   }
 
   .product-card__price {
     margin-top: var(--space-1);
     font-size: var(--text-sm);
     font-weight: 600;
+    color: black;
   }
+
 
   .product-card__image-wrapper {
     position: relative;
