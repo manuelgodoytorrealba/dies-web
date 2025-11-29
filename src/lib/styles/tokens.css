@@ -7,9 +7,9 @@
     --color-surface-elevated: #E8E6E3;
     /* Superficie elevada (modals, banners) */
 
-    --color-text: #FFFFFF;
+    --color-text: #1E1E1E;
     /* Texto principal */
-    --color-text-muted: #1E1E1E;
+    --color-text-muted: #ffff;
     /* Texto secundario */
 
 

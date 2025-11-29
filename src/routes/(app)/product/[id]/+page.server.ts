@@ -1,25 +1,32 @@
 // src/routes/(app)/product/[id]/+page.server.ts
 import type { PageServerLoad } from './$types';
-import { getProductById, getProductImages } from '$lib/server/db-repo';
+import {
+  getProductById,
+  getProductImages,
+  getProductVariants
+} from '$lib/server/db-repo';
 
 export const load: PageServerLoad = async ({ params }) => {
   const productId = params.id;
 
-  // Producto
+  // 1) Producto
   const product = await getProductById(productId);
   if (!product) {
-    // si no existe, lo mandamos al catálogo
     return {
       status: 302,
       redirect: '/catalog'
     } as any;
   }
 
-  // Imágenes (puede devolver [])
+  // 2) Imágenes
   const images = await getProductImages(productId);
+
+  // 3) TALLAS DEL MISMO MODELO
+  const variants = await getProductVariants(product.modelo_slug);
 
   return {
     product,
-    images
+    images,
+    variants
   };
 };

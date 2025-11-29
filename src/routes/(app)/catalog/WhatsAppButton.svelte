@@ -3,11 +3,10 @@
 
   export let product: Product;
 
-  const PHONE = '34680973028'; // sin +, formato wa.me
+  const PHONE = '34680973028'; // sin +
 
-  // Mensaje base (lo puedes ajustar luego)
+  // Mensaje base
   $: message =
-    
     `Hola! Me interesa este producto:\n` +
     `• ${product.nombre}\n` +
     `• Marca: ${product.marca}\n` +
@@ -15,22 +14,26 @@
     `• Precio: €${product.precio_publicado}\n\n` +
     `¿Sigue disponible?`;
 
-  // URL del producto (para tracking humano)
+  // URL del producto
   $: productUrl =
     typeof window !== 'undefined'
       ? `${window.location.origin}/product/${product.product_id}`
       : '';
 
+  // WhatsApp URL oficial
   $: whatsappUrl =
-    `https://wa.me/${PHONE}?text=${encodeURIComponent(message + `\n\nLink: ${productUrl}`)}`;
+    `https://wa.me/${PHONE}?text=${encodeURIComponent(
+      message + `\n\nLink: ${productUrl}`
+    )}`;
 
-  async function handleClick() {
+  // tracking antes de abrir WhatsApp
+  async function handleClick(event: MouseEvent) {
+    event.preventDefault();
+
     try {
-      // tracking lead (no bloquea si falla)
       await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        // keepalive ayuda si el navegador navega rápido
         keepalive: true,
         body: JSON.stringify({
           source: 'whatsapp',
@@ -46,16 +49,19 @@
       console.warn('[whatsapp lead tracking]', e);
     }
 
-    window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    // NO usar window.open → Safari lo bloquea
+    // Esto funciona en TODOS los navegadores:
+    window.location.href = whatsappUrl;
   }
 </script>
 
-<button class="wa" on:click={handleClick}>
+<a class="wa" href={whatsappUrl} on:click={handleClick}>
   Preguntar por WhatsApp
-</button>
+</a>
 
 <style>
   .wa {
+    display: block;
     width: 100%;
     padding: 14px 18px;
     border-radius: 999px;
@@ -64,7 +70,12 @@
     color: white;
     font-weight: 700;
     cursor: pointer;
+    text-align: center;
+    text-decoration: none;
     transition: transform 0.05s ease;
   }
-  .wa:active { transform: translateY(1px); }
+
+  .wa:active { 
+    transform: translateY(1px); 
+  }
 </style>

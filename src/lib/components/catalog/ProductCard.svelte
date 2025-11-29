@@ -1,40 +1,42 @@
 <script lang="ts">
-  import type { Product } from '$lib/types/product';
+  import type { CatalogModel } from '$lib/gateways/products';
 
-  export let product: Product;
+  export let model: CatalogModel;
 </script>
 
 <article class="product-card card">
-  <a class="product-card__link" href={`/product/${product.product_id}`}>
+  <!-- Usamos sample_product_id para ir a la página de detalle -->
+  <a class="product-card__link" href={`/product/${model.sample_product_id}`}>
     <!-- HEADER: texto arriba -->
     <header class="product-card__header">
       <div class="product-card__title-block">
-        {#if product.marca}
+        {#if model.marca}
           <p class="product-card__brand">
-            {product.marca}
+            {model.marca}
           </p>
         {/if}
 
         <h2 class="product-card__name">
-          {product.nombre}
+          {model.nombre}
         </h2>
 
-        {#if product.descripcion}
-          <p class="product-card__description">
-            {product.descripcion}
-          </p>
-        {/if}
-      </div>
+        <!-- Info básica de modelo -->
+        <p class="product-card__meta">
+          Tallas: {model.tallas_disponibles.join(' · ')} · Stock total: {model.stock_total}
+        </p>
 
-     
+        <p class="product-card__price">
+          Desde €{model.precio_desde}
+        </p>
+      </div>
     </header>
 
     <!-- IMAGEN ABAJO -->
     <div class="product-card__image-wrapper">
-      {#if product.imagen_url}
+      {#if model.imagen_url}
         <img
-          src={product.imagen_url}
-          alt={product.nombre}
+          src={model.imagen_url}
+          alt={model.nombre}
           loading="lazy"
         />
       {:else}
@@ -68,7 +70,6 @@
     height: 100%;
   }
 
-  /* HEADER TEXTO ARRIBA */
   .product-card__header {
     display: flex;
     justify-content: space-between;
@@ -80,7 +81,7 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    max-width: 70%;
+    max-width: 100%;
   }
 
   .product-card__brand {
@@ -97,16 +98,18 @@
     color: black;
   }
 
-  .product-card__description {
+  .product-card__meta {
     margin-top: var(--space-1);
     font-size: var(--text-xxs);
     color: var(--color-text-muted);
-    line-height: 1.5;
-    max-height: 3rem; /* 2–3 líneas */
-    overflow: hidden;
   }
 
-  /* IMAGEN ABAJO */
+  .product-card__price {
+    margin-top: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: 600;
+  }
+
   .product-card__image-wrapper {
     position: relative;
     border-radius: var(--radius-md);

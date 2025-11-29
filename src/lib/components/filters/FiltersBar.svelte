@@ -145,6 +145,7 @@
 		padding: var(--space-5) var(--space-3);
 		border: 1px solid var(--color-border-subtle);
 		border-radius: var(--radius-md);
+		
 
 		/* que sea más estrecho */
 		max-width: 550px;
@@ -209,7 +210,7 @@
   border: 1px solid var(--color-border-subtle);
 
   background-color: var(--color-surface);
-  color: var(--color-text-muted);
+  color: var(--color-text);
 
   font-size: var(--text-sm);
   font-family: var(--font-sans);
@@ -224,7 +225,7 @@
 
 /* Placeholder suave */
 .bar input::placeholder {
-  color: var(--color-text-muted);
+  color: var(--color-text);
 }
 
 /* Hover: un pelín de énfasis */

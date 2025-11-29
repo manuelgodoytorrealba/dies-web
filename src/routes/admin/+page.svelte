@@ -23,7 +23,7 @@
     </a>
 
     <a class="card disabled" href="#soon">
-      <h2>📊 Leads (próximamente)</h2>
+      <h2 >📊 Leads (próximamente)</h2>
       <p>Ver contactos interesados provenientes de WhatsApp.</p>
     </a>
   </div>
@@ -44,6 +44,7 @@
   p {
     margin-bottom: 24px;
     opacity: 0.8;
+    color: black;
   }
 
   .grid {

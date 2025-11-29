@@ -4,7 +4,6 @@ import { supabasePublic, supabaseAdmin } from './supabase';
 const PRODUCTS_TABLE = 'products';
 const PRODUCT_IMAGES_TABLE = 'product_images';
 
-
 // Columnas reales
 const ID_COL = 'product_id';
 const NAME_COL = 'nombre';
@@ -12,34 +11,31 @@ const DESC_COL = 'descripcion';
 const BRAND_COL = 'marca';
 const SLUG_COL = 'slug';
 
-
-
 /**
- * Normaliza errores de Supabase a un formato simple.
+ * Manejo simple de errores
  */
 function handleError(context: string, error: unknown) {
   console.error(`[db-repo] ${context}`, error);
   throw new Error(`Database error in ${context}`);
 }
 
-/**
- * Obtener TODOS los productos publicados (catálogo).
- */
+/* ----------------------------------------------------------- */
+/* 📦  GET PRODUCTS (CATÁLOGO)                                 */
+/* ----------------------------------------------------------- */
 export async function getProducts() {
   const { data, error } = await supabasePublic
     .from(PRODUCTS_TABLE)
     .select('*')
     .eq('published', true)
-    .order('created_at', { ascending: false }); // 👈 NUEVO ORDEN GLOBAL
+    .order('created_at', { ascending: false });
 
   if (error) handleError('getProducts', error);
   return data ?? [];
 }
 
-/**
- * Obtener un producto por product_id.
- * NO filtra por published, porque el admin puede ver borradores.
- */
+/* ----------------------------------------------------------- */
+/* 📦  GET PRODUCT BY ID                                        */
+/* ----------------------------------------------------------- */
 export async function getProductById(id: string) {
   const { data, error } = await supabasePublic
     .from(PRODUCTS_TABLE)
@@ -51,9 +47,9 @@ export async function getProductById(id: string) {
   return data;
 }
 
-/**
- * Obtener un producto por slug.
- */
+/* ----------------------------------------------------------- */
+/* 📦  GET PRODUCT BY SLUG                                      */
+/* ----------------------------------------------------------- */
 export async function getProductBySlug(slug: string) {
   const { data, error } = await supabasePublic
     .from(PRODUCTS_TABLE)
@@ -65,9 +61,9 @@ export async function getProductBySlug(slug: string) {
   return data;
 }
 
-/**
- * Obtener productos por marca (solo los publicados).
- */
+/* ----------------------------------------------------------- */
+/* 📦  GET PRODUCTS BY BRAND (PUBLISHED)                        */
+/* ----------------------------------------------------------- */
 export async function getProductsByBrand(brand: string) {
   const b = brand.trim();
   if (!b) return [];
@@ -83,9 +79,9 @@ export async function getProductsByBrand(brand: string) {
   return data ?? [];
 }
 
-/**
- * Buscar productos en catálogo (publicados).
- */
+/* ----------------------------------------------------------- */
+/* 🔍  SEARCH PRODUCTS                                          */
+/* ----------------------------------------------------------- */
 export async function searchProducts(query: string) {
   const q = query.trim();
   if (!q) return [];
@@ -106,15 +102,13 @@ export async function searchProducts(query: string) {
   return data ?? [];
 }
 
-/**
- * Crear producto (solo admin).
- * Por defecto:
- *  published = false
- */
+/* ----------------------------------------------------------- */
+/* 🛠 CREATE PRODUCT (ADMIN)                                    */
+/* ----------------------------------------------------------- */
 export async function createProduct(payload: Record<string, any>) {
   const finalPayload = {
     ...payload,
-    published: false, // 👈 NUEVO: protege el catálogo
+    published: false,
     created_at: new Date().toISOString()
   };
 
@@ -128,10 +122,9 @@ export async function createProduct(payload: Record<string, any>) {
   return data;
 }
 
-
-/**
- * Actualizar producto (solo admin).
- */
+/* ----------------------------------------------------------- */
+/* 🛠 UPDATE PRODUCT (ADMIN)                                    */
+/* ----------------------------------------------------------- */
 export async function updateProduct(id: string, patch: Record<string, any>) {
   const { data, error } = await supabaseAdmin
     .from(PRODUCTS_TABLE)
@@ -144,22 +137,20 @@ export async function updateProduct(id: string, patch: Record<string, any>) {
   return data;
 }
 
-/**
- * Borrar producto (solo admin).
- */
+/* ----------------------------------------------------------- */
+/* 🗑 DELETE PRODUCT + IMAGES                                   */
+/* ----------------------------------------------------------- */
 export async function deleteProduct(productId: string) {
   try {
     const bucket = 'productos';
 
-    // 1) Leer URLs de las imágenes asociadas
+    // 1) Leer imágenes asociadas
     const { data: images, error: imgError } = await supabaseAdmin
       .from('product_images')
       .select('url')
       .eq('product_id', productId);
 
-    if (imgError) {
-      console.error('[db-repo/deleteProduct] error obteniendo imágenes', imgError);
-    } else if (images && images.length > 0) {
+    if (!imgError && images?.length) {
       const paths = images
         .map((img) => {
           try {
@@ -172,19 +163,10 @@ export async function deleteProduct(productId: string) {
             return null;
           }
         })
-        .filter((p): p is string => !!p);
+        .filter(Boolean) as string[];
 
       if (paths.length) {
-        const { error: rmError } = await supabaseAdmin.storage
-          .from(bucket)
-          .remove(paths);
-
-        if (rmError) {
-          console.error(
-            '[db-repo/deleteProduct] error eliminando del storage',
-            rmError
-          );
-        }
+        await supabaseAdmin.storage.from(bucket).remove(paths);
       }
     }
 
@@ -193,18 +175,16 @@ export async function deleteProduct(productId: string) {
       .delete()
       .eq('product_id', productId);
 
-    if (error) {
-      // 👇 aquí estaba el problema, ya corregido
-      handleError('deleteProduct', error);
-    }
+    if (error) handleError('deleteProduct', error);
   } catch (err) {
-    console.error('[db-repo/deleteProduct] unexpected', err);
+    console.error('[deleteProduct] unexpected', err);
     throw new Error('Database error in deleteProduct');
   }
 }
 
-// --- GALERÍA DE IMÁGENES POR PRODUCTO ------------------------
-
+/* ----------------------------------------------------------- */
+/* 🖼  PRODUCT IMAGES                                            */
+/* ----------------------------------------------------------- */
 export async function getProductImages(productId: string) {
   const { data, error } = await supabasePublic
     .from(PRODUCT_IMAGES_TABLE)
@@ -235,4 +215,24 @@ export async function deleteProductImage(id: string) {
 
   if (error) handleError('deleteProductImage', error);
   return true;
+}
+
+/* ----------------------------------------------------------- */
+/* 🔥  VARIANTES (TALLAS DE UN MISMO MODELO)                     */
+/* ----------------------------------------------------------- */
+export async function getProductVariants(modelo_slug: string) {
+  const { data, error } = await supabasePublic
+    .from('products')
+    .select('product_id, talla, stock, precio_publicado')
+    .eq('modelo_slug', modelo_slug)
+    .eq('published', true)
+    .eq('status_producto', 'disponible')
+    .order('talla', { ascending: true });
+
+  if (error) {
+    console.error('[getProductVariants] error', error);
+    return [];
+  }
+
+  return data ?? [];
 }

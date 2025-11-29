@@ -4,54 +4,45 @@
   import ProductCard from '$lib/components/catalog/ProductCard.svelte';
   import FiltersBar from '$lib/components/filters/FiltersBar.svelte';
   import { filtersStore } from '$lib/stores/filters';
-  import type { Product } from '$lib/types/product';
+  import type { CatalogModel } from '$lib/gateways/products';
 
   export let data: PageData;
 
-  // Todos los productos que vienen del servidor (sea desde +page.ts o +page.server.ts)
-  let products: Product[] = Array.isArray(data.products) ? data.products : [];
+  // Ahora trabajamos con "models" que vienen del servidor
+  let models: CatalogModel[] = Array.isArray(data.models) ? data.models : [];
 
-  // Tamaño de "página" en el frontend
-  const PAGE_SIZE = 8;
-
-  // Cuántos productos mostramos actualmente
+  const PAGE_SIZE = 24;
   let visibleCount = PAGE_SIZE;
 
-  // Arrays derivados
-  let filtered: Product[] = [];
-  let visible: Product[] = [];
+  let filtered: CatalogModel[] = [];
+  let visible: CatalogModel[] = [];
 
   // Filtros del store (igual que antes)
   $: filters = $filtersStore;
 
-  // Cada vez que cambien productos o filtros,
-  // recalculamos filtrados y reiniciamos visibleCount.
+  // Recalcular cuando cambien datos o filtros
   $: {
-    filtered = applyClientFilters(products, filters);
+    filtered = applyClientFilters(models, filters);
     visibleCount = PAGE_SIZE;
   }
 
-  // Los productos que realmente se pintan
+  // Los que realmente se pintan
   $: visible = filtered.slice(0, visibleCount);
 
-  // ¿Quedan más por mostrar?
+  // ¿Hay más?
   $: hasMore = visibleCount < filtered.length;
 
   let sentinel: HTMLDivElement | null = null;
   let loading = false;
 
-function loadMore() {
-  if (loading) return;
-  if (!hasMore) return;
+  function loadMore() {
+    if (loading) return;
+    if (!hasMore) return;
 
-  loading = true;
-  console.log('➡️ loadMore: visibles antes =', visibleCount);
-
-  visibleCount += PAGE_SIZE;
-
-  console.log('⬆️ loadMore: visibles después =', visibleCount);
-  loading = false;
-}
+    loading = true;
+    visibleCount += PAGE_SIZE;
+    loading = false;
+  }
 
   onMount(() => {
     if (!sentinel) return;
@@ -68,54 +59,55 @@ function loadMore() {
     return () => observer.disconnect();
   });
 
-  // --- mismo filtrado de antes, pero blindado ---
-  function applyClientFilters(list: Product[] | null | undefined, f: any) {
+  // --- Filtrado en cliente adaptado a CatalogModel ---
+  function applyClientFilters(list: CatalogModel[] | null | undefined, f: any) {
     const source = Array.isArray(list) ? list : [];
     let out = [...source];
 
+    // categoría
     if (f?.category) {
-      out = out.filter((p) =>
-        ((p as any).categoria ?? 'zapatillas').toLowerCase() === f.category.toLowerCase()
+      out = out.filter((m) =>
+        (m.categoria ?? 'zapatillas').toLowerCase() === f.category.toLowerCase()
       );
     }
 
+    // marca
     if (f?.brand) {
       const b = String(f.brand).toLowerCase();
-      out = out.filter((p) => p.marca.toLowerCase().includes(b));
+      out = out.filter((m) => m.marca.toLowerCase().includes(b));
     }
 
+    // talla -> usamos tallas_disponibles (array)
     if (f?.size) {
-      out = out.filter((p) => String(p.talla) === String(f.size));
+      const s = String(f.size);
+      out = out.filter((m) => m.tallas_disponibles.includes(s));
     }
 
+    // búsqueda texto -> nombre + marca
     if (f?.query) {
       const q = String(f.query).toLowerCase();
       out = out.filter(
-        (p) =>
-          p.nombre.toLowerCase().includes(q) ||
-          (p.descripcion ?? '').toLowerCase().includes(q) ||
-          p.marca.toLowerCase().includes(q) ||
-          p.slug.toLowerCase().includes(q)
+        (m) =>
+          m.nombre.toLowerCase().includes(q) ||
+          m.marca.toLowerCase().includes(q)
       );
     }
 
+    // precio mínimo / máximo (precio_desde)
     if (f?.priceMin != null) {
-      out = out.filter((p) => Number(p.precio_publicado) >= f.priceMin);
+      out = out.filter((m) => Number(m.precio_desde) >= f.priceMin);
     }
     if (f?.priceMax != null) {
-      out = out.filter((p) => Number(p.precio_publicado) <= f.priceMax);
+      out = out.filter((m) => Number(m.precio_desde) <= f.priceMax);
     }
 
+    // ordenación
     if (f?.orderBy === 'price-asc') {
-      out.sort((a, b) => Number(a.precio_publicado) - Number(b.precio_publicado));
+      out.sort((a, b) => Number(a.precio_desde) - Number(b.precio_desde));
     } else if (f?.orderBy === 'price-desc') {
-      out.sort((a, b) => Number(b.precio_publicado) - Number(a.precio_publicado));
-    } else if (f?.orderBy === 'newest') {
-      out.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      out.sort((a, b) => Number(b.precio_desde) - Number(a.precio_desde));
     }
+    // si f?.orderBy === 'newest' no hacemos nada por ahora (la vista no tiene created_at)
 
     return out;
   }
@@ -123,17 +115,15 @@ function loadMore() {
 
 <section class="catalog">
   <FiltersBar />
- 
 
   {#if visible.length === 0}
     <p>No hay productos con esos filtros.</p>
   {:else}
-
     <div class="grid">
-  {#each visible as p}
-    <ProductCard product={p} />
-  {/each}
-</div>
+      {#each visible as model}
+        <ProductCard {model} />
+      {/each}
+    </div>
 
     {#if hasMore}
       <div bind:this={sentinel} class="sentinel">
