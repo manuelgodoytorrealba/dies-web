@@ -5,6 +5,9 @@
   let email = '';
   let password = '';
   let confirmPassword = '';
+  let fullName = '';
+  let whatsapp = '';
+
   let loading = false;
   let errorMsg = '';
   let successMsg = '';
@@ -14,8 +17,8 @@
     successMsg = '';
     loading = true;
 
-    if (!email || !password || !confirmPassword) {
-      errorMsg = 'Rellena todos los campos.';
+    if (!email || !password || !confirmPassword || !fullName) {
+      errorMsg = 'Rellena todos los campos obligatorios.';
       loading = false;
       return;
     }
@@ -28,12 +31,18 @@
 
     const { data, error } = await supabaseBrowser.auth.signUp({
       email,
-      password
+      password,
+      options: {
+        emailRedirectTo: window.location.origin + '/login',
+        data: {
+          full_name: fullName,
+          whatsapp
+        }
+      }
     });
 
     loading = false;
 
-    // 1) Error “clásico” de Supabase
     if (error) {
       if (error.code === 'user_already_exists') {
         errorMsg = 'Ya existe una cuenta con este correo. Ve a Iniciar sesión.';
@@ -43,7 +52,7 @@
       return;
     }
 
-    // 2) Caso “raro” de Supabase: no hay error pero el usuario ya existía
+    // caso raro
     const alreadyRegistered =
       data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
 
@@ -52,18 +61,24 @@
       return;
     }
 
-    // 3) Registro correcto
-    successMsg = `Cuenta creada. Revisa tu correo (${email}) y confirma para poder entrar.`;
-
-    // Si quieres redirigir al login después de unos segundos:
-    // setTimeout(() => goto('/login'), 2000);
+    successMsg = `Cuenta creada. Revisa tu correo (${email}) y confirma para entrar.`;
   }
 </script>
 
 <section class="auth">
-  <h1>Crear cuenta</h1>
+  <h1 class="title">Crear cuenta</h1>
 
   <div class="card">
+    <label>
+      Nombre completo
+      <input type="text" bind:value={fullName} placeholder="Tu nombre o alias" />
+    </label>
+
+    <label>
+      WhatsApp (opcional)
+      <input type="tel" bind:value={whatsapp} placeholder="+34 600 000 000" />
+    </label>
+
     <label>
       Email
       <input type="email" bind:value={email} />
@@ -98,13 +113,80 @@
 </section>
 
 <style>
-  .auth { padding: 32px; display:flex; flex-direction:column; align-items:center; gap:16px; }
-  .card { width: 320px; border:1px solid #ddd; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:12px; background:#fff; }
-  label { display:flex; flex-direction:column; gap:6px; font-weight:600;color: #111; }
-  input { padding:10px 12px; border-radius:10px; border:1px solid #444; }
-  button { padding:10px 12px; border-radius:10px; border:1px solid #444; background:#111; color:#fff; font-weight:700; cursor:pointer; }
-  button:disabled { opacity:.6; cursor:default; }
-  .error { color:#b00020; font-size:14px; }
-  .success { color:#0a7b28; font-size:14px; }
-  .links { display:flex; justify-content:space-between; font-size:14px; }
+  .auth {
+    padding: 48px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .title {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 420px; /* 🔥 MÁS ANCHO */
+    border: 1px solid #ddd;
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+    color: #111;
+    font-size: 14px;
+  }
+
+  input {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    font-size: 15px;
+  }
+
+  button {
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    background: #111;
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 15px;
+    margin-top: 6px;
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .error {
+    color: #b00020;
+    font-size: 14px;
+  }
+
+  .success {
+    color: #0a7b28;
+    font-size: 14px;
+  }
+
+  .links {
+    display: flex;
+    justify-content: center;
+    font-size: 14px;
+  }
 </style>

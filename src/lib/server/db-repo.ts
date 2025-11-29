@@ -256,7 +256,7 @@ export async function getStockOverview() {
 
 // --- LEADS ----------------------------------------------------
 
-// Devuelve las filas tal cual están en la tabla `leads`
+// Devuelve las filas de `leads` + el producto asociado
 export async function getLeads(limit = 200) {
   const { data, error } = await supabaseAdmin
     .from('leads')
@@ -276,7 +276,13 @@ export async function getLeads(limit = 200) {
         referer,
         utm_source,
         utm_medium,
-        utm_campaign
+        utm_campaign,
+        product:products (
+          nombre,
+          marca,
+          precio_publicado,
+          slug
+        )
       `
     )
     .order('created_at', { ascending: false })
@@ -287,7 +293,6 @@ export async function getLeads(limit = 200) {
     return [];
   }
 
-  // IMPORTANTÍSIMO: aquí devolvemos tal cual
   return data ?? [];
 }
 
