@@ -12,18 +12,21 @@
   <p>Bienvenido, <strong>{user.email}</strong></p>
 
   <div class="grid">
+    <!-- PRODUCTOS -->
     <a class="card" href="/admin/products">
       <h2>🧾 Productos</h2>
       <p>Ver, crear y editar productos del catálogo.</p>
     </a>
 
-    <a class="card disabled" href="#soon">
-      <h2>📦 Stock (próximamente)</h2>
+    <!-- STOCK (YA NO DISABLED) -->
+    <a class="card" href="/admin/stock">
+      <h2>📦 Stock</h2>
       <p>Control de stock y estado de los productos.</p>
     </a>
 
-    <a class="card disabled" href="#soon">
-      <h2 >📊 Leads (próximamente)</h2>
+    <!-- LEADS (YA NO DISABLED) -->
+    <a class="card" href="/admin/leads">
+      <h2>📊 Leads</h2>
       <p>Ver contactos interesados provenientes de WhatsApp.</p>
     </a>
   </div>
@@ -77,10 +80,5 @@
     margin: 0;
     font-size: 14px;
     opacity: 0.8;
-  }
-
-  .card.disabled {
-    opacity: 0.6;
-    pointer-events: none;
   }
 </style>

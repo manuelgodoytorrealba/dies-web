@@ -236,3 +236,101 @@ export async function getProductVariants(modelo_slug: string) {
 
   return data ?? [];
 }
+// --- STOCK (vista por modelo) ---------------------------------
+
+// Usa la vista catalog_models que ya creamos en SQL
+export async function getStockOverview() {
+  const { data, error } = await supabasePublic
+    .from('catalog_models')
+    .select('*')
+    .order('marca', { ascending: true })
+    .order('nombre', { ascending: true });
+
+  if (error) {
+    console.error('[db-repo/getStockOverview]', error);
+    throw new Error('Database error in getStockOverview');
+  }
+
+  return data ?? [];
+}
+
+// --- LEADS ----------------------------------------------------
+
+export async function getLeads(limit = 200) {
+  // Traemos lead + datos básicos del producto asociado
+  const { data, error } = await supabasePublic
+    .from('leads')
+    .select(
+      `
+      lead_id,
+      product_id,
+      size,
+      status,
+      channel,
+      created_at,
+      notes,
+      products:product_id (
+        nombre,
+        marca,
+        precio_publicado
+      )
+    `
+    )
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('[db-repo/getLeads]', error);
+    throw new Error('Database error in getLeads');
+  }
+
+  return data ?? [];
+}
+
+export async function updateLeadStatus(leadId: string, status: string) {
+  const { error } = await supabaseAdmin
+    .from('leads')
+    .update({
+      status,
+      updated_at: new Date().toISOString()
+    })
+    .eq('lead_id', leadId);
+
+  if (error) {
+    console.error('[db-repo/updateLeadStatus]', error);
+    throw new Error('Database error in updateLeadStatus');
+  }
+
+  return true;
+}
+
+// 🔹 STOCK OVERVIEW: una fila por product_id (modelo + talla)
+export async function getStockRows() {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('products')
+      .select(
+        [
+          'product_id',
+          'modelo_slug',
+          'nombre',
+          'marca',
+          'talla',
+          'stock',
+          'status_producto',
+          'published',
+          'created_at'
+        ].join(',')
+      )
+      .order('modelo_slug', { ascending: true })
+      .order('talla', { ascending: true });
+
+    if (error) {
+      handleError('getStockRows', error);
+    }
+
+    return data ?? [];
+  } catch (err) {
+    handleError('getStockRows', err);
+  }
+}

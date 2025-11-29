@@ -1,3 +1,4 @@
+// src/routes/api/leads/+server.ts
 import { json } from '@sveltejs/kit';
 import { supabasePublic } from '$lib/server/supabase';
 
@@ -12,6 +13,10 @@ export async function POST({ request }) {
       size: body.talla ?? null,
       channel: 'whatsapp',
       status: 'new',
+      // snapshots opcionales
+      product_name_snapshot: body.nombre ?? null,
+      product_price_snapshot: body.precio_publicado ?? null,
+      product_slug_snapshot: body.slug ?? null,
       // lo que NO sabemos aún:
       user_id: null,
       phone: null,
