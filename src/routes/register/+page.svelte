@@ -1,6 +1,5 @@
 <script lang="ts">
   import { supabaseBrowser } from '$lib/supabase-browser';
-  import { goto } from '$app/navigation';
 
   let email = '';
   let password = '';
@@ -52,7 +51,6 @@
       return;
     }
 
-    // caso raro
     const alreadyRegistered =
       data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0;
 
@@ -61,14 +59,14 @@
       return;
     }
 
-    successMsg = `Cuenta creada. Revisa tu correo (${email}) y confirma para entrar.`;
+    successMsg = `Cuenta creada. Revisa tu correo (${email}) y confirma para poder entrar.`;
   }
 </script>
 
-<section class="auth">
-  <h1 class="title">Crear cuenta</h1>
+<section class="auth auth--wide">
+  <h1>Crear cuenta</h1>
 
-  <div class="card">
+  <div class="card card--wide">
     <label>
       Nombre completo
       <input type="text" bind:value={fullName} placeholder="Tu nombre o alias" />
@@ -114,32 +112,35 @@
 
 <style>
   .auth {
-    padding: 48px 16px;
+    padding: 48px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 24px;
   }
 
-  .title {
-    font-size: 28px;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-    margin-bottom: 8px;
+  .auth--wide {
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   .card {
-    width: 100%;
-    max-width: 420px; /* 🔥 MÁS ANCHO */
     border: 1px solid #ddd;
-    border-radius: 18px;
-    padding: 24px;
+    border-radius: 16px;
+    padding: 24px 24px 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     background: #fff;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
   }
+
+  .card--wide {
+    width: 100%;
+    max-width: 480px;
+  }
+
+ 
 
   label {
     display: flex;
@@ -151,22 +152,20 @@
   }
 
   input {
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
     border: 1px solid #444;
-    font-size: 15px;
+    font-size: 14px;
   }
 
   button {
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
     border: 1px solid #444;
     background: #111;
     color: #fff;
     font-weight: 700;
     cursor: pointer;
-    font-size: 15px;
-    margin-top: 6px;
   }
 
   button:disabled {
@@ -186,7 +185,13 @@
 
   .links {
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     font-size: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .card--wide {
+      max-width: 100%;
+    }
   }
 </style>
