@@ -6,14 +6,15 @@
 
 <header class="app-header">
 	<div class="app-header__inner flex-between">
-		<div class="app-header__brand">
-			<a href="/profile" class="app-header__title">DIES</a>
-		</div>
-
 		<div class="app-header__logo">
+			
 			<a href="/catalog" class="logo-link">
 				<img src={logo} alt="logo-dies" />
 			</a>
+		</div>
+
+		<div class="app-header__brand">
+			<a href="/profile" class="app-header__title">DIES CATALOG</a>
 		</div>
 
 		<nav class="app-header__nav">
@@ -49,11 +50,10 @@
 		font-weight: 600;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
-		color: black;
+		color: rgb(251, 248, 248);
 	}
 
 	.app-header__logo img {
-		
 		width: 4.5rem;
 		height: 3.5rem;
 		border-radius: var(--radius-lg);
@@ -66,14 +66,14 @@
 		gap: var(--space-2);
 	}
 
-  .logo-link {
-  display: inline-block;
-  cursor: pointer;
-}
+	.logo-link {
+		display: inline-block;
+		cursor: pointer;
+	}
 
-.logo-link img {
-  display: block;
-}
+	.logo-link img {
+		display: block;
+	}
 
 	@media (max-width: 768px) {
 		.app-header__inner {

@@ -21,13 +21,13 @@
         </h2>
 
         <!-- Info básica de modelo -->
-        <p class="product-card__meta">
+        <!-- <p class="product-card__meta">
           Tallas: {model.tallas_disponibles.join(' · ')} · Stock total: {model.stock_total}
-        </p>
+        </p> -->
 
-        <p class="product-card__price">
+        <!-- <p class="product-card__price">
           Desde €{model.precio_desde}
-        </p>
+        </p> -->
       </div>
     </header>
 
@@ -99,7 +99,7 @@
     color: black;
   }
 
-  .product-card__meta {
+  /* .product-card__meta {
     margin-top: var(--space-1);
     font-size: var(--text-xxs);
     color: var(--color-text);
@@ -110,7 +110,7 @@
     font-size: var(--text-sm);
     font-weight: 600;
     color: black;
-  }
+  } */
 
 
   .product-card__image-wrapper {
@@ -127,7 +127,7 @@
   .product-card__image-wrapper img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit:contain;
     display: block;
   }
 

@@ -173,7 +173,7 @@
 	/* Estado seleccionado: usa el color principal y mantiene el “look botón” */
 	.filters-category.selected {
 		background-color: var(--color-primary);
-		color: var(--color-text);
+		color: var(--color-text-muted);
 	}
 
 	/* Opcional: que al hacer click siga viéndose “activo” pero sin perder el color seleccionado */

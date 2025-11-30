@@ -39,6 +39,5 @@
     max-width: 1200px;
     width: 100%;
     margin: 0 auto;
-    padding: var(--space-5) var(--space-4);
   }
 </style>
