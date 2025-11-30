@@ -5,14 +5,13 @@ import type { Handle } from '@sveltejs/kit';
 import type { Session, User } from '@supabase/supabase-js';
 
 export const handle: Handle = async ({ event, resolve }) => {
-  // Cliente de Supabase para el server (usa cookies de SvelteKit)
   const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
     cookies: {
       get: (name) => event.cookies.get(name),
       set: (name, value, options) => {
         event.cookies.set(name, value, {
           ...(options ?? {}),
-          path: options?.path ?? '/' // MUY importante para que la cookie sirva en toda la app
+          path: options?.path ?? '/'
         });
       },
       remove: (name, options) => {
@@ -24,26 +23,64 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   });
 
-  // Guardamos el cliente en locals
   event.locals.supabase = supabase;
 
-  // Helper para obtener la sesión en cualquier load/action del server
-  event.locals.getSession = async (): Promise<Session | null> => {
-    const { data, error } = await supabase.auth.getSession();
+  let session: Session | null = null;
+  let user: User | null = null;
+
+  // ✅ Intentamos obtener el usuario validado
+  try {
+    const { data, error } = await supabase.auth.getUser();
+
     if (error) {
-      console.error('[hooks.getSession] error', error);
+      // ⚠️ Si no hay sesión (status 400), lo ignoramos: usuario deslogueado
+      const status = (error as any).status;
+      if (status !== 400) {
+        console.error('[hooks] getUser error', error);
+      }
+    } else {
+      user = (data?.user as User) ?? null;
+    }
+  } catch (err: any) {
+    const status = err?.status;
+    if (status !== 400) {
+      console.error('[hooks] unexpected getUser error', err);
+    }
+  }
+
+  // Guardamos en locals
+  event.locals.session = session;
+  event.locals.user = user;
+
+  // Helper opcional, por si algún sitio aún usa getSession()
+  event.locals.getSession = async (): Promise<Session | null> => {
+    if (session) return session;
+
+    try {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        const status = (error as any).status;
+        if (status !== 400) {
+          console.error('[hooks] getSession error', error);
+        }
+        return null;
+      }
+
+      session = data.session;
+      event.locals.session = session;
+      return session;
+    } catch (err: any) {
+      const status = err?.status;
+      if (status !== 400) {
+        console.error('[hooks] unexpected getSession error', err);
+      }
       return null;
     }
-    return data.session;
   };
-
-  // Guardamos también el user para el layout global
-  const session = await event.locals.getSession();
-  event.locals.user = (session?.user as User) ?? null;
 
   return resolve(event, {
     filterSerializedResponseHeaders(name) {
-      // Recomendado por Supabase para no enviar cabeceras internas
       return name === 'content-range' || name === 'x-supabase-api-version';
     }
   });

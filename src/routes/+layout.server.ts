@@ -2,8 +2,9 @@
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals }) => {
-  const session = await locals.getSession();
-  const user = locals.user; // ya lo rellenamos en hooks
-
-  return { session, user };
+  // El hook ya puso session y user en locals
+  return {
+    session: locals.session,
+    user: locals.user
+  };
 };

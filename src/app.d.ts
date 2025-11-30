@@ -5,8 +5,9 @@ declare global {
   namespace App {
     interface Locals {
       supabase: SupabaseClient;
-      getSession: () => Promise<Session | null>;
+      session: Session | null;
       user: User | null;
+      getSession: () => Promise<Session | null>;
     }
 
     interface PageData {
