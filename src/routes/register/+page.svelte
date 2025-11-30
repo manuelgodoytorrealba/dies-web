@@ -66,7 +66,7 @@
 
 <section class="auth-layout">
   <div class="auth-shell">
-    <!-- IMAGEN IZQUIERDA -->
+    <!-- IMAGEN IZQUIERDA (solo desktop) -->
     <div class="auth-hero">
       <img src={heroImage} alt="Sneaker reseller" />
       <div class="auth-hero__label">
@@ -135,70 +135,83 @@
 </section>
 
 <style>
-  /* Reutilizamos EXACTAMENTE los mismos estilos del login */
+  /* --- LAYOUT GENERAL (DESKTOP) --- */
   .auth-layout {
+    width: 100%;
     min-height: calc(100vh - 80px);
-    padding: 32px 16px 48px;
-    background: var(--color-bg);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
+    background: var(--color-bg);
+    padding: 24px 0;
   }
 
+  /* Tarjeta */
   .auth-shell {
     width: 100%;
-    max-width: 100vw;
+    max-width: 1120px;
+    /* ⬆️ un pelín más alta que el login para que quepa todo */
+    max-height: 640px;
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-    gap: 32px;
+    gap: 28px;
     background: #f8f6f3;
     border-radius: 24px;
-    padding: 24px;
+    padding: 20px;
     border: 1px solid #ddd4c9;
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.09);
   }
 
+  /* IMAGEN IZQUIERDA */
   .auth-hero {
     border-radius: 20px;
     overflow: hidden;
     position: relative;
     background: #111;
+    height: 85%;
+    /* 👇 sin height fija, que se adapte al contenido del panel */
   }
 
   .auth-hero img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
   }
 
-  .auth-hero__label {
-    position: absolute;
-    left: 24px;
-    bottom: 24px;
-    color: white;
-    font-family: var(--font-mono, 'SF Mono', ui-monospace, Menlo, monospace);
-  }
+ .auth-hero__label {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  padding: 6px 12px;
+  background: rgba(0,0,0,0.32);
+  border-radius: 8px;
+  color: #fff;
+  backdrop-filter: blur(2px);
+}
 
   .auth-hero__kicker {
-    font-size: 1rem;
+    font-size: 1.5rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    color: white;
   }
 
   .auth-hero__since {
     margin-top: 4px;
     font-size: 0.8rem;
     opacity: 0.85;
+    color: white;
   }
 
+  /* PANEL DERECHO (sin height fija) */
   .auth-panel {
     border-radius: 20px;
     background: #c9c5bc;
-    padding: 28px 28px 24px;
+    padding: 20px 22px 18px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
+    height: 85%;
   }
 
   .auth-panel__header h1 {
@@ -210,17 +223,17 @@
   }
 
   .auth-panel__subtitle {
-    margin-top: 6px;
+    margin-top: 4px;
     text-align: center;
     font-size: 0.9rem;
     color: #333;
   }
 
   .auth-form {
-    margin-top: 8px;
+    margin-top: 6px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px; /* un pelín más compacto que antes */
   }
 
   label {
@@ -233,7 +246,7 @@
   }
 
   input {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border-radius: 10px;
     border: 1px solid #444;
     font-size: 0.9rem;
@@ -282,38 +295,46 @@
     text-decoration: underline;
   }
 
+  @media (min-width: 1600px) {
+  .auth-shell {
+    max-width: 1320px;     /* un poco más grande */
+    max-height: 760px;     /* algo más de altura para el register */
+  }
+}
+
+  /* --- MOBILE / TABLET: sin imagen, sólo formulario --- */
   @media (max-width: 880px) {
+    .auth-layout {
+      min-height: auto;
+      padding: 20px 30px 32px;
+      align-items: flex-start;
+    }
+
     .auth-shell {
+      max-height: none;
       grid-template-columns: 1fr;
-      padding: 18px;
-      gap: 18px;
+      padding: 20px;
+      background: white;
+      box-shadow: none;
+      border: none;
     }
 
     .auth-hero {
-      height: 260px;
+      display: none; /* 👈 ocultamos foto en mobile */
     }
 
     .auth-panel {
-      padding: 20px 18px 18px;
-    }
-
-    .auth-panel__header h1 {
-      font-size: 1.3rem;
+      border-radius: 0;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 16px;
+      background: transparent;
     }
   }
 
   @media (max-width: 600px) {
-    .auth-layout {
-      padding: 16px 8px 32px;
-    }
-
-    .auth-hero {
-      height: 220px;
-      border-radius: 16px;
-    }
-
-    .auth-panel {
-      border-radius: 16px;
+    .auth-panel__header h1 {
+      font-size: 1.3rem;
     }
   }
 </style>

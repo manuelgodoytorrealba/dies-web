@@ -78,6 +78,7 @@
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    display: block;
   }
 
   .app-header__title {
@@ -97,20 +98,20 @@
   }
 
   /* 📱 Mobile */
-  @media (max-width: 768px) {
-    .app-header__inner {
-      padding: var(--space-2) var(--space-3);
-      gap: var(--space-2);
-    }
-
-    .app-header__title {
-      font-size: var(--text-lg);
-      letter-spacing: 0.08em;
-    }
-
-    .app-header__nav .btn {
-      padding-inline: 0.75rem;
-      font-size: var(--text-xs);
-    }
+@media (max-width: 768px) {
+  /* Ocultar el título centrado en pantallas pequeñas */
+  .app-header__brand {
+    display: none;
   }
+
+  .app-header__inner {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .app-header__nav .btn {
+    padding-inline: 0.75rem;
+    font-size: var(--text-xs);
+  }
+}
 </style>

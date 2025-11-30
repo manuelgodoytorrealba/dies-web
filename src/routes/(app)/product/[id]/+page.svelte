@@ -169,12 +169,12 @@
 <style>
 	/* Vista: panel blanco centrado, ocupa casi todo el viewport */
 	.product-detail-page {
-		min-height: calc(100vh - 80px); /* ajusta a la altura real del header */
+		min-height: calc(90vh - 120px); /* header + footer aprox */
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		background: var(--color-bg);
-		padding: 24px 0;
+		padding: 16px 0;
 	}
 
 	.product-shell {
@@ -183,31 +183,24 @@
 		max-width: 1100px;
 		width: 100%;
 		margin-inline: 16px;
-		padding: 24px 40px 32px;
+
+		/* 👇 CLAVE: limitamos altura total en desktop */
+		max-height: 620px;
+
+		padding: 20px 32px 24px;
 		display: grid;
 		grid-template-rows: auto 1fr auto;
-		row-gap: 24px;
+		row-gap: 20px;
 		box-shadow: var(--shadow-soft);
+		overflow: hidden; /* por si acaso algo se quiere salir */
 	}
 
 	/* -------- FILA SUPERIOR -------- */
 	.product-header {
-		position: relative; /* ⭐ necesario para centrar absolutas */
 		display: grid;
 		grid-template-columns: auto 1fr auto;
 		align-items: center;
 		column-gap: 24px;
-	}
-
-	.back-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		border: none;
-		background: transparent;
-		cursor: pointer;
-		font-size: 0.9rem;
-		color: #000;
 	}
 
 	.back-link {
@@ -234,6 +227,7 @@
 
 	.back-text {
 		letter-spacing: 0.015em;
+		font-family: var(--font-sans);
 	}
 
 	.product-header__right-placeholder {
@@ -241,25 +235,19 @@
 		justify-self: end;
 	}
 
-	/* -------- PLACEHOLDERS DE ASSETS -------- */
-
-	/* -------- TALLAS CENTRADAS Y MÁS GRANDES -------- */
+	/* -------- TALLAS CENTRADAS -------- */
 	.sizes-wrapper {
 		text-align: center;
-		justify-self: center;
-    padding-right: 150px;
+		justify-self: center; /* centrado dentro de la cabecera */
 	}
-
-	/* .sizes-label {
-		font-size: 0.95rem;
-		margin-bottom: 6px;
-	} */
 
 	.sizes-row {
 		display: inline-flex;
 		gap: 10px;
 		flex-wrap: wrap;
 		justify-content: center;
+		margin-right: 100px;
+		
 	}
 
 	.size-chip {
@@ -273,17 +261,13 @@
 		font-weight: 500;
 		cursor: pointer;
 		transition: 0.18s ease;
+    font-family: var(--font-sans);
 	}
 
 	.size-chip.selected {
 		background: #000;
 		transform: translateY(-2px);
 	}
-
-	/* .sizes-selected {
-		margin-top: 6px;
-		font-size: 0.9rem;
-	} */
 
 	/* -------- ZONA CENTRAL: GALERÍA -------- */
 	.product-main {
@@ -295,10 +279,10 @@
 	.gallery {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		gap: 10px;
 		width: 100%;
 		max-width: 720px;
-		margin-inline: auto; /* ⭐ fuerza centrado dentro del panel */
+		margin-inline: auto;
 		align-items: center;
 	}
 
@@ -306,11 +290,13 @@
 		position: relative;
 		border-radius: 16px;
 		background: #fafafa;
-		padding: 16px;
+		padding: 14px;
 		display: flex;
 		justify-content: center;
 		align-items: center;
-		max-height: 430px;
+
+		/* 👇 algo más baja que antes para que todo quepa */
+		max-height: 330px;
 		aspect-ratio: 4 / 3;
 		overflow: hidden;
 		width: 100%;
@@ -349,7 +335,7 @@
 	.thumbs button img {
 		width: 100%;
 		height: 100%;
-		object-fit: cover;
+		object-fit: contain;
 		display: block;
 	}
 
@@ -405,6 +391,7 @@
 		.product-shell {
 			border-radius: 0;
 			max-width: 100%;
+			max-height: none; /* en móvil dejamos que haga scroll */
 			margin-inline: 0;
 			padding: 16px 16px 32px;
 			box-shadow: none;
@@ -421,7 +408,6 @@
 		.sizes-wrapper {
 			justify-self: center;
 			text-align: center;
-      padding-right: 0px;
 		}
 
 		.main-image {
@@ -443,13 +429,15 @@
 			width: 100%;
 			max-width: 320px;
 		}
-		@media (min-width: 900px) {
-			.sizes-wrapper {
-				position: absolute;
-				left: 20%;
-				transform: translateX(-50%);
-				text-align: center;
-			}
+		.sizes-row {
+			margin-right: 0px;
+		}
+	}
+
+	/* 💻 Ajuste extra para tamaños grandes si quieres recolocar tallas */
+	@media (min-width: 1200px) {
+		.product-shell {
+			max-height: 640px;
 		}
 	}
 </style>

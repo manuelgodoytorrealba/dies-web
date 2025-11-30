@@ -137,14 +137,31 @@
 
 <style>
   .catalog {
-    padding: 0px;
+    width: 100%;
+    max-width: 1200px;      /* anchura “DS” */
+    margin: 24px auto 40px; /* centrado bajo el header */
+    padding: 0 16px;
   }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
-    gap: 16px;
+    gap: 24px;
     margin-top: 16px;
+    grid-template-columns: 1fr; /* base: móvil = 1 card */
+  }
+
+  /* >= 780px → 2 columnas */
+  @media (min-width: 780px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* >= 1180px aprox → 3 columnas */
+  @media (min-width: 1180px) {
+    .grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
 
   .sentinel {

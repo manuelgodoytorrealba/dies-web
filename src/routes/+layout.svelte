@@ -1,43 +1,44 @@
 <script lang="ts">
-  import favicon from '$lib/assets/favicon.svg';
-  import CatalogHeader from '$lib/components/layout/CatalogHeader.svelte';
-  import Footer from '$lib/components/layout/Footer.svelte';
+	import favicon from '$lib/assets/favicon.svg';
+	import CatalogHeader from '$lib/components/layout/CatalogHeader.svelte';
+	import Footer from '$lib/components/layout/Footer.svelte';
 
-  import '$lib/styles/base.css';
-  import '$lib/styles/utilities.css';
-  import '$lib/styles/components.css';
-  // tokens normalmente ya los importa base.css; si quieres puedes quitar esta línea
-  // import '$lib/styles/tokens.css';
+	import '$lib/styles/base.css';
+	import '$lib/styles/utilities.css';
+	import '$lib/styles/components.css';
 
-  let { data, children } = $props();
-  const user = $derived(data.user ?? null);
+	let { data, children } = $props();
+	const user = $derived(data.user ?? null);
 </script>
 
 <svelte:head>
-  <link rel="icon" href={favicon} />
+	<link rel="icon" href={favicon} />
 </svelte:head>
 
 <div class="page-root">
-  <CatalogHeader {user} />
+	<CatalogHeader {user} />
 
-  <main class="app-shell">
-    {@render children()}
-  </main>
+	<main class="app-shell">
+		{@render children()}
+	</main>
 
-  <Footer />
+	<Footer />
 </div>
 
 <style>
-  .page-root {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+	.page-root {
+		min-height: 100vh;
+		display: flex;
+		flex-direction: column;
+	}
 
-  .app-shell {
-    flex: 1; /* ocupa todo el espacio entre header y footer */
-    max-width: 1200px;
+	/* contenedor central */
+
+  main.app-shell {
+    flex: 1;
+    min-height: 0;
     width: 100%;
-    margin: 0 auto;
+    /* ya NO centramos con justify-content/align-items */
+    display: block;
   }
 </style>

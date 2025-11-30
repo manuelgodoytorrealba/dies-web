@@ -54,9 +54,9 @@ a:hover {
   text-decoration: underline;
 }
 
-/* Layout general de la app (puede ajustar con tu +layout.svelte) */
-.app-shell {
+/* ❌ NO toques .app-shell aquí, ya se define en layout */
+/* ✔️ usa una clase diferente si necesitas wrappers */
+.container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0px;
 }
