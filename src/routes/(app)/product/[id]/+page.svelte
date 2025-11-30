@@ -93,7 +93,7 @@
 
 			{#if variants && variants.length}
 				<div class="sizes-wrapper">
-					<p class="sizes-label">Tallas disponibles</p>
+					<!-- <p class="sizes-label">Tallas disponibles</p> -->
 
 					<div class="sizes-row">
 						{#each variants as v}
@@ -108,11 +108,11 @@
 						{/each}
 					</div>
 
-					{#if selectedSizeLabel}
+					<!-- {#if selectedSizeLabel}
 						<p class="sizes-selected">
 							Seleccionada: {selectedSizeLabel}
 						</p>
-					{/if}
+					{/if} -->
 				</div>
 			{/if}
 
@@ -250,10 +250,10 @@
     padding-right: 150px;
 	}
 
-	.sizes-label {
+	/* .sizes-label {
 		font-size: 0.95rem;
 		margin-bottom: 6px;
-	}
+	} */
 
 	.sizes-row {
 		display: inline-flex;
@@ -280,10 +280,10 @@
 		transform: translateY(-2px);
 	}
 
-	.sizes-selected {
+	/* .sizes-selected {
 		margin-top: 6px;
 		font-size: 0.9rem;
-	}
+	} */
 
 	/* -------- ZONA CENTRAL: GALERÍA -------- */
 	.product-main {
