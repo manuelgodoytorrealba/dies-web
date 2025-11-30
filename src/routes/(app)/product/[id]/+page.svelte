@@ -186,7 +186,7 @@
     <section class="product-info">
       <p class="product-info__brand">{p.marca}</p>
       <h1 class="product-info__name">{p.nombre}</h1>
-      <p class="product-info__price">€{displayPrice}</p>
+      <!-- <p class="product-info__price">€{displayPrice}</p> -->
 
       {#if selectedSizeLabel}
         <p class="product-info__size">
