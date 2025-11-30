@@ -1,534 +1,455 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  import WhatsAppButton from '../../catalog/WhatsAppButton.svelte';
+	import type { PageData } from './$types';
+	import WhatsAppButton from '../../catalog/WhatsAppButton.svelte';
 
-  export let data: PageData;
+	export let data: PageData;
 
-  const p = data.product;
+	const p = data.product;
 
-  type Variant = {
-    product_id: string;
-    talla: string | number;
-    stock: number;
-    precio_publicado: string | number;
-  };
+	type Variant = {
+		product_id: string;
+		talla: string | number;
+		stock: number;
+		precio_publicado: string | number;
+	};
 
-  type ProductImage = {
-    id: string;
-    url: string;
-    orden?: number | null;
-  };
+	type ProductImage = {
+		id: string;
+		url: string;
+		orden?: number | null;
+	};
 
-  const images: ProductImage[] = data.images ?? [];
-  const variants: Variant[] = data.variants ?? [];
+	const images: ProductImage[] = data.images ?? [];
+	const variants: Variant[] = data.variants ?? [];
 
-  // ---------------- GALERÍA ----------------
-  const gallery: ProductImage[] =
-    images.length
-      ? [...images].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
-      : (p.imagen_url ? [{ id: 'main', url: p.imagen_url }] : []);
+	// ---------------- GALERÍA ----------------
+	const gallery: ProductImage[] = images.length
+		? [...images].sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0))
+		: p.imagen_url
+			? [{ id: 'main', url: p.imagen_url }]
+			: [];
 
-  let currentIndex = 0;
+	let currentIndex = 0;
 
-  function prev() {
-    if (!gallery.length) return;
-    currentIndex = (currentIndex - 1 + gallery.length) % gallery.length;
-  }
+	function prev() {
+		if (!gallery.length) return;
+		currentIndex = (currentIndex - 1 + gallery.length) % gallery.length;
+	}
 
-  function next() {
-    if (!gallery.length) return;
-    currentIndex = (currentIndex + 1) % gallery.length;
-  }
+	function next() {
+		if (!gallery.length) return;
+		currentIndex = (currentIndex + 1) % gallery.length;
+	}
 
-  function goTo(i: number) {
-    currentIndex = i;
-  }
+	function goTo(i: number) {
+		currentIndex = i;
+	}
 
-  // ------------- SELECCIÓN DE TALLA -------------
+	// ------------- SELECCIÓN DE TALLA -------------
 
-  // Variante por defecto:
-  // 1) la que coincide con el product_id actual
-  // 2) si no, la primera
-  // 3) si no hay, null
-  let selectedVariant: Variant | null =
-    variants.find((v) => v.product_id === p.product_id) ??
-    (variants.length ? variants[0] : null);
+	let selectedVariant: Variant | null =
+		variants.find((v) => v.product_id === p.product_id) ?? (variants.length ? variants[0] : null);
 
-  // talla seleccionada (solo el valor, para mostrar en chips)
-  $: selectedSize = selectedVariant?.talla ?? null;
+	$: selectedSize = selectedVariant?.talla ?? null;
 
-  // etiqueta para el texto "Talla seleccionada"
-  $: selectedSizeLabel =
-    selectedVariant?.talla ??
-    p.talla ??
-    (variants.length ? variants[0].talla : null);
+	$: selectedSizeLabel =
+		selectedVariant?.talla ?? p.talla ?? (variants.length ? variants[0].talla : null);
 
-  // precio a mostrar (si cambia por talla)
-  $: displayPrice = selectedVariant?.precio_publicado ?? p.precio_publicado;
+	$: displayPrice = selectedVariant?.precio_publicado ?? p.precio_publicado;
 
-  function handleSelectSize(v: Variant) {
-    selectedVariant = v;
-  }
+	function handleSelectSize(v: Variant) {
+		selectedVariant = v;
+	}
 
-  // Objeto que se manda a WhatsApp
-  $: productForWhatsApp =
-    selectedVariant
-      ? {
-          ...p,
-          product_id: selectedVariant.product_id,
-          talla: selectedVariant.talla,
-          precio_publicado: selectedVariant.precio_publicado
-        }
-      : p;
+	$: productForWhatsApp = selectedVariant
+		? {
+				...p,
+				product_id: selectedVariant.product_id,
+				talla: selectedVariant.talla,
+				precio_publicado: selectedVariant.precio_publicado
+			}
+		: p;
 </script>
 
 <section class="product-detail-page">
-  <div class="product-shell">
-    <!-- HEADER -->
-    <header class="product-header">
-      <a href="/catalog" class="back-link">
-        <span class="back-link__icon" aria-hidden="true"></span>
-        <span class="back-link__text">
-          Volver a<br />catálogo
-        </span>
-      </a>
+	<div class="product-shell">
+		<!-- FILA SUPERIOR: back + tallas -->
+		<header class="product-header">
+			<button class="back-link" type="button" on:click={() => history.back()}>
+				<svg
+					class="back-icon"
+					width="28"
+					height="28"
+					viewBox="0 0 24 24"
+					stroke="black"
+					fill="none"
+					stroke-width="2.4"
+				>
+					<path d="M15 6 L9 12 L15 18" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
 
-      <div class="product-header__right-placeholder"></div>
-    </header>
+				<span class="back-text">Volver al catálogo</span>
+			</button>
 
-    <!-- TALLAS (VARIANTS) -->
-    {#if variants && variants.length}
-      <section class="sizes-wrapper">
-        <div class="sizes-header">
-          <p class="sizes-label">Tallas disponibles</p>
-          {#if selectedSizeLabel}
-            <p class="sizes-selected">
-              Seleccionada: {selectedSizeLabel}
-            </p>
-          {/if}
-        </div>
+			{#if variants && variants.length}
+				<div class="sizes-wrapper">
+					<p class="sizes-label">Tallas disponibles</p>
 
-        <div class="sizes-scroll">
-          <div class="sizes-row">
-            {#each variants as v}
-              <button
-                type="button"
-                class="size-chip"
-                class:selected={v.talla === selectedSize}
-                on:click={() => handleSelectSize(v)}
-              >
-                {v.talla}
-              </button>
-            {/each}
-          </div>
-        </div>
+					<div class="sizes-row">
+						{#each variants as v}
+							<button
+								type="button"
+								class="size-chip"
+								class:selected={v.talla === selectedSize}
+								on:click={() => handleSelectSize(v)}
+							>
+								{v.talla}
+							</button>
+						{/each}
+					</div>
 
-        {#if variants.length > 5}
-          <p class="sizes-hint">
-            Desliza lateralmente para ver todas las tallas →
-          </p>
-        {/if}
-      </section>
-    {/if}
+					{#if selectedSizeLabel}
+						<p class="sizes-selected">
+							Seleccionada: {selectedSizeLabel}
+						</p>
+					{/if}
+				</div>
+			{/if}
 
-    <!-- GALERÍA -->
-    <main class="product-main">
-      <div class="gallery">
-        <div class="main-image">
-          {#if gallery.length > 1}
-            <button
-              type="button"
-              class="nav prev"
-              on:click={prev}
-              aria-label="Imagen anterior"
-            >
-              ‹
-            </button>
-          {/if}
+			<!-- columna derecha vacía para balancear -->
+			<div class="product-header__right-placeholder"></div>
+		</header>
 
-          {#if gallery.length}
-            <img src={gallery[currentIndex].url} alt={p.nombre} />
-          {:else}
-            <div class="main-image empty">
-              <span>Sin imágenes</span>
-            </div>
-          {/if}
+		<!-- ZONA CENTRAL: IMAGEN + FLECHAS -->
+		<main class="product-main">
+			<div class="gallery">
+				<div class="main-image">
+					{#if gallery.length}
+						<img src={gallery[currentIndex].url} alt={p.nombre} />
+					{:else}
+						<div class="main-image empty">
+							<span>Sin imágenes</span>
+						</div>
+					{/if}
+				</div>
 
-          {#if gallery.length > 1}
-            <button
-              type="button"
-              class="nav next"
-              on:click={next}
-              aria-label="Imagen siguiente"
-            >
-              ›
-            </button>
-          {/if}
-        </div>
+				{#if gallery.length > 1}
+					<div class="thumbs">
+						{#each gallery as img, i}
+							<button type="button" class:active={i === currentIndex} on:click={() => goTo(i)}>
+								<img src={img.url} alt={`${p.nombre} ${i + 1}`} />
+							</button>
+						{/each}
+					</div>
+				{/if}
+			</div>
+		</main>
 
-        {#if gallery.length > 1}
-          <div class="thumbs">
-            {#each gallery as img, i}
-              <button
-                type="button"
-                class:active={i === currentIndex}
-                on:click={() => goTo(i)}
-              >
-                <img src={img.url} alt={`${p.nombre} ${i + 1}`} />
-              </button>
-            {/each}
-          </div>
-        {/if}
-      </div>
-    </main>
+		<!-- FILA INFERIOR: info + CTA -->
+		<section class="product-bottom">
+			<div class="product-info">
+				<p class="product-info__brand">{p.marca}</p>
+				<h1 class="product-info__name">{p.nombre}</h1>
 
-    <!-- INFO -->
-    <section class="product-info">
-      <p class="product-info__brand">{p.marca}</p>
-      <h1 class="product-info__name">{p.nombre}</h1>
-      <!-- <p class="product-info__price">€{displayPrice}</p> -->
+				{#if selectedSizeLabel}
+					<p class="product-info__size">
+						Talla seleccionada: <strong>{selectedSizeLabel}</strong>
+					</p>
+				{/if}
+			</div>
 
-      {#if selectedSizeLabel}
-        <p class="product-info__size">
-          Talla seleccionada: <strong>{selectedSizeLabel}</strong>
-        </p>
-      {/if}
-
-      {#if p.descripcion}
-        <p class="product-info__description">{p.descripcion}</p>
-      {/if}
-    </section>
-
-    <!-- CTA WHATSAPP -->
-    <div class="cta-row">
-      <WhatsAppButton product={productForWhatsApp} />
-    </div>
-  </div>
+			<div class="cta-row">
+				<!-- aquí ya metes tu componente con el logo de WhatsApp dentro -->
+				<WhatsAppButton product={productForWhatsApp} />
+			</div>
+		</section>
+	</div>
 </section>
 
 <style>
-  /* PANTALLA COMPLETA ENTRE HEADER Y FOOTER */
-  .product-detail-page {
-    min-height: calc(100vh - 120px); /* ajusta si hace falta */
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    background: transparent;
-  }
+	/* Vista: panel blanco centrado, ocupa casi todo el viewport */
+	.product-detail-page {
+		min-height: calc(100vh - 80px); /* ajusta a la altura real del header */
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		background: var(--color-bg);
+		padding: 24px 0;
+	}
 
-  .product-shell {
-    width: 100%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: var(--space-5) var(--space-4) var(--space-6);
-    background-color: #fff;
-    border-radius: 0;
-    box-shadow: none;
-  }
+	.product-shell {
+		background: #fff;
+		border-radius: 24px;
+		max-width: 1100px;
+		width: 100%;
+		margin-inline: 16px;
+		padding: 24px 40px 32px;
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+		row-gap: 24px;
+		box-shadow: var(--shadow-soft);
+	}
 
-  /* HEADER */
-  .product-header {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    margin-bottom: var(--space-5);
-    column-gap: var(--space-3);
-  }
+	/* -------- FILA SUPERIOR -------- */
+	.product-header {
+		position: relative; /* ⭐ necesario para centrar absolutas */
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		column-gap: 24px;
+	}
 
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-2);
-    text-decoration: none;
-    color: var(--color-text);
-    font-size: var(--text-xs);
-  }
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		border: none;
+		background: transparent;
+		cursor: pointer;
+		font-size: 0.9rem;
+		color: #000;
+	}
 
-  .back-link__icon {
-    width: 32px;
-    height: 32px;
-    border-left: 2px solid #000;
-    border-top: 2px solid #000;
-    transform: rotate(-45deg);
-    margin-right: 6px;
-  }
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		border: none;
+		background: transparent;
+		cursor: pointer;
+		font-size: 0.95rem;
+		font-weight: 500;
+		padding: 8px 0;
+		color: #000;
+		transition: opacity 0.15s ease;
+	}
 
-  .back-link__text {
-    line-height: 1.2;
-    color: #000;
-  }
+	.back-link:hover {
+		opacity: 0.6;
+	}
 
-  .product-header__right-placeholder {
-    justify-self: end;
-    width: 40px;
-  }
+	.back-icon {
+		display: block;
+	}
 
-  /* TALLAS */
-  .sizes-wrapper {
-  margin-bottom: var(--space-6);
-}
+	.back-text {
+		letter-spacing: 0.015em;
+	}
 
-.sizes-scroll {
-  overflow-x: auto;
-  padding: var(--space-2) 0;
-}
+	.product-header__right-placeholder {
+		width: 32px;
+		justify-self: end;
+	}
 
-.sizes-row {
-  display: flex;
-  justify-content: center; /* ⭐ CENTRAR SIEMPRE */
-  gap: var(--space-3);
-  padding: 0 var(--space-2);
-  min-width: 100%;
-}
+	/* -------- PLACEHOLDERS DE ASSETS -------- */
 
-.size-chip {
-  min-width: 64px;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-full);
-  background-color: #4a4643;
-  color: white;
-  text-align: center;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-  border: 1px solid transparent;
-  transition: 0.18s ease;
-}
+	/* -------- TALLAS CENTRADAS Y MÁS GRANDES -------- */
+	.sizes-wrapper {
+		text-align: center;
+		justify-self: center;
+    padding-right: 150px;
+	}
 
-.size-chip.selected {
-  background: black;
-  border-color: black;
-  color: white;
-  transform: translateY(-2px);
-}
+	.sizes-label {
+		font-size: 0.95rem;
+		margin-bottom: 6px;
+	}
 
-  .sizes-scroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
-  }
+	.sizes-row {
+		display: inline-flex;
+		gap: 10px;
+		flex-wrap: wrap;
+		justify-content: center;
+	}
 
-  .sizes-row {
-    display: inline-flex;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-1);
-  }
+	.size-chip {
+		min-width: 72px;
+		padding: 8px 18px;
+		border-radius: 999px;
+		border: none;
+		background-color: #4a4643;
+		color: #fff;
+		font-size: 0.9rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: 0.18s ease;
+	}
 
-  .size-chip {
-    flex: 0 0 auto;
-    min-width: 56px;
-    padding: var(--space-2) var(--space-3);
-    border-radius: 999px;
-    border: none;
-    background-color: var(--color-primary-soft, #555);
-    color: #fff;
-    text-align: center;
-    font-size: var(--text-sm);
-    font-weight: 500;
-    box-shadow: var(--shadow-soft);
-    cursor: pointer;
-    transition:
-      background-color 120ms ease,
-      transform 80ms ease,
-      box-shadow 120ms ease;
-  }
+	.size-chip.selected {
+		background: #000;
+		transform: translateY(-2px);
+	}
 
-  .size-chip.selected {
-    background-color: #000;
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-strong);
-  }
+	.sizes-selected {
+		margin-top: 6px;
+		font-size: 0.9rem;
+	}
 
-  .size-chip:active {
-    transform: translateY(0);
-  }
+	/* -------- ZONA CENTRAL: GALERÍA -------- */
+	.product-main {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
 
-  .sizes-hint {
-    margin-top: var(--space-1);
-    font-size: var(--text-xxs);
-    color: var(--color-text-muted, #888);
-    text-align: center;
-  }
+	.gallery {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		width: 100%;
+		max-width: 720px;
+		margin-inline: auto; /* ⭐ fuerza centrado dentro del panel */
+		align-items: center;
+	}
 
-  /* GALERÍA */
-  .product-main {
-    display: flex;
-    justify-content: center;
-    margin-bottom: var(--space-5);
-  }
+	.main-image {
+		position: relative;
+		border-radius: 16px;
+		background: #fafafa;
+		padding: 16px;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		max-height: 430px;
+		aspect-ratio: 4 / 3;
+		overflow: hidden;
+		width: 100%;
+	}
 
-  .gallery {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
-    width: 100%;
-    max-width: 720px;
-  }
+	.main-image img {
+		max-width: 100%;
+		max-height: 100%;
+		object-fit: contain;
+		display: block;
+	}
 
-  .main-image {
-    position: relative;
-    border-radius: 16px;
-    border: 1px solid #eee;
-    overflow: hidden;
-    background: #fafafa;
-    min-height: 320px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+	.main-image.empty {
+		color: #999;
+		font-size: 0.9rem;
+	}
 
-  .main-image img {
-    width: 100%;
-    max-height: 520px;
-    object-fit: contain;
-    margin:0 auto;
-    display: block;
-  }
+	.thumbs {
+		display: flex;
+		gap: 8px;
+		overflow-x: auto;
+		padding-bottom: 4px;
+	}
 
-  .main-image.empty {
-    color: #999;
-    font-size: 14px;
-  }
+	.thumbs button {
+		border: 1px solid transparent;
+		padding: 0;
+		border-radius: 10px;
+		overflow: hidden;
+		cursor: pointer;
+		flex: 0 0 72px;
+		height: 72px;
+		background: #f5f5f5;
+	}
 
-  .nav {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    border: none;
-    background: rgba(255, 255, 255, 0.85);
-    width: 40px;
-    height: 40px;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 24px;
-    font-weight: 600;
-  }
+	.thumbs button img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		display: block;
+	}
 
-  .nav.prev {
-    left: 12px;
-  }
+	.thumbs button.active {
+		border-color: #111;
+	}
 
-  .nav.next {
-    right: 12px;
-  }
+	/* -------- FILA INFERIOR -------- */
+	.product-bottom {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+	}
 
-  .thumbs {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-  }
+	.product-info {
+		text-align: left;
+	}
 
-  .thumbs button {
-    border: 1px solid transparent;
-    padding: 0;
-    border-radius: 10px;
-    overflow: hidden;
-    cursor: pointer;
-    flex: 0 0 72px;
-    height: 72px;
-    background: #f5f5f5;
-  }
+	.product-info__brand {
+		font-size: 0.8rem;
+		text-transform: uppercase;
+		letter-spacing: 0.12em;
+	}
 
-  .thumbs button img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
+	.product-info__name {
+		font-size: 1.1rem;
+		font-weight: 600;
+		margin-top: 4px;
+	}
 
-  .thumbs button.active {
-    border-color: #111;
-  }
+	.product-info__size {
+		margin-top: 4px;
+		font-size: 0.9rem;
+	}
 
-  /* INFO */
-  .product-info {
-    text-align: center;
-    margin-bottom: var(--space-6);
-  }
+	.cta-row {
+		flex-shrink: 0;
+	}
 
-  .product-info__brand {
-    font-size: var(--text-xs);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-text);
-    margin-bottom: var(--space-1);
-  }
+	.cta-row :global(.btn-whatsapp),
+	.cta-row :global(a.btn-whatsapp) {
+		min-width: 260px;
+	}
 
-  .product-info__name {
-    font-size: var(--text-lg);
-    margin-bottom: var(--space-1);
-    color: #000;
-  }
+	/* 📱 Mobile / tablet */
+	@media (max-width: 900px) {
+		.product-detail-page {
+			align-items: stretch;
+			padding: 0;
+		}
 
-  .product-info__price {
-    font-size: var(--text-md);
-    font-weight: 600;
-  }
+		.product-shell {
+			border-radius: 0;
+			max-width: 100%;
+			margin-inline: 0;
+			padding: 16px 16px 32px;
+			box-shadow: none;
+			grid-template-rows: auto auto auto;
+			row-gap: 16px;
+		}
 
-  .product-info__size {
-    margin-top: var(--space-1);
-    font-size: var(--text-sm);
-  }
+		.product-header {
+			grid-template-columns: 1fr;
+			row-gap: 12px;
+			justify-items: flex-start;
+		}
 
-  .product-info__description {
-    margin-top: var(--space-2);
-    font-size: var(--text-sm);
-    line-height: 1.5;
-    color: var(--color-text);
-  }
+		.sizes-wrapper {
+			justify-self: center;
+			text-align: center;
+      padding-right: 0px;
+		}
 
-  /* CTA WHATSAPP */
-  .cta-row {
-    display: flex;
-    justify-content: center;
-  }
+		.main-image {
+			max-height: 320px;
+		}
 
-  .cta-row :global(.btn-whatsapp),
-  .cta-row :global(a.btn-whatsapp) {
-    min-width: 260px;
-  }
+		.product-bottom {
+			flex-direction: column;
+			align-items: center;
+			text-align: center;
+		}
 
-  /* Fondo blanco ocupando toda la pantalla */
-.product-detail-page {
-  background: white;
-  padding: 0;
-  margin: 0;
-}
+		.cta-row {
+			width: 100%;
+		}
 
-/* El contenedor interno ahora debe ser blanco a full */
-.product-shell {
-  background: white;
-  max-width: 100%;
-  width: 100%;
-  border-radius: 0;
-  padding: 32px 20px 80px;
-  box-shadow: none;
-}
-
-  @media (max-width: 768px) {
-    .product-detail-page {
-      min-height: calc(100vh - 100px);
-      padding: 0;
-    }
-
-    .product-shell {
-      padding: var(--space-4) var(--space-3) var(--space-6);
-      border-radius: 0;
-    }
-
-    .product-header {
-      margin-bottom: var(--space-4);
-    }
-
-    .gallery {
-      max-width: 100%;
-    }
-
-    .cta-row :global(.btn-whatsapp),
-    .cta-row :global(a.btn-whatsapp) {
-      width: 100%;
-      max-width: 320px;
-    }
-  }
+		.cta-row :global(.btn-whatsapp),
+		.cta-row :global(a.btn-whatsapp) {
+			width: 100%;
+			max-width: 320px;
+		}
+		@media (min-width: 900px) {
+			.sizes-wrapper {
+				position: absolute;
+				left: 20%;
+				transform: translateX(-50%);
+				text-align: center;
+			}
+		}
+	}
 </style>
