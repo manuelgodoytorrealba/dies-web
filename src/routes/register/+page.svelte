@@ -1,5 +1,6 @@
 <script lang="ts">
   import { supabaseBrowser } from '$lib/supabase-browser';
+  import heroImage from '$lib/assets/login-register.jpg';
 
   let email = '';
   let password = '';
@@ -63,135 +64,256 @@
   }
 </script>
 
-<section class="auth auth--wide">
-  <h1>Crear cuenta</h1>
+<section class="auth-layout">
+  <div class="auth-shell">
+    <!-- IMAGEN IZQUIERDA -->
+    <div class="auth-hero">
+      <img src={heroImage} alt="Sneaker reseller" />
+      <div class="auth-hero__label">
+        <p class="auth-hero__kicker">Sneaker Reseller</p>
+        <p class="auth-hero__since">Desde 2018</p>
+      </div>
+    </div>
 
-  <div class="card card--wide">
-    <label>
-      Nombre completo
-      <input type="text" bind:value={fullName} placeholder="Tu nombre o alias" />
-    </label>
+    <!-- PANEL DERECHO: REGISTER -->
+    <div class="auth-panel">
+      <div class="auth-panel__header">
+        <h1>Crear cuenta</h1>
+        <p class="auth-panel__subtitle">
+          Regístrate para guardar tus leads, productos favoritos y pedidos.
+        </p>
+      </div>
 
-    <label>
-      WhatsApp (opcional)
-      <input type="tel" bind:value={whatsapp} placeholder="+34 600 000 000" />
-    </label>
+      <div class="auth-form">
+        <label>
+          Nombre completo
+          <input type="text" bind:value={fullName} placeholder="Tu nombre o alias" />
+        </label>
 
-    <label>
-      Email
-      <input type="email" bind:value={email} />
-    </label>
+        <label>
+          WhatsApp (opcional)
+          <input type="tel" bind:value={whatsapp} placeholder="+34 600 000 000" />
+        </label>
 
-    <label>
-      Contraseña
-      <input type="password" bind:value={password} />
-    </label>
+        <label>
+          Email
+          <input type="email" bind:value={email} />
+        </label>
 
-    <label>
-      Repite la contraseña
-      <input type="password" bind:value={confirmPassword} />
-    </label>
+        <label>
+          Contraseña
+          <input type="password" bind:value={password} />
+        </label>
 
-    {#if errorMsg}
-      <p class="error">{errorMsg}</p>
-    {/if}
+        <label>
+          Repite la contraseña
+          <input type="password" bind:value={confirmPassword} />
+        </label>
 
-    {#if successMsg}
-      <p class="success">{successMsg}</p>
-    {/if}
+        {#if errorMsg}
+          <p class="auth-message auth-message--error">{errorMsg}</p>
+        {/if}
 
-    <button on:click={onRegister} disabled={loading}>
-      {loading ? 'Creando cuenta...' : 'Crear cuenta'}
-    </button>
+        {#if successMsg}
+          <p class="auth-message auth-message--success">{successMsg}</p>
+        {/if}
 
-    <div class="links">
-      <a href="/login">Ya tengo cuenta</a>
+        <button
+          class="auth-btn auth-btn--primary"
+          on:click={onRegister}
+          disabled={loading}
+        >
+          {loading ? 'Creando cuenta...' : 'Crear cuenta'}
+        </button>
+
+        <div class="auth-links">
+          <a href="/login">Ya tengo cuenta</a>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <style>
-  .auth {
-    padding: 48px 24px;
+  /* Reutilizamos EXACTAMENTE los mismos estilos del login */
+  .auth-layout {
+    min-height: calc(100vh - 80px);
+    padding: 32px 16px 48px;
+    background: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-shell {
+    width: 100%;
+    max-width: 100vw;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 32px;
+    background: #f8f6f3;
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid #ddd4c9;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.09);
+  }
+
+  .auth-hero {
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    background: #111;
+  }
+
+  .auth-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .auth-hero__label {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    color: white;
+    font-family: var(--font-mono, 'SF Mono', ui-monospace, Menlo, monospace);
+  }
+
+  .auth-hero__kicker {
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .auth-hero__since {
+    margin-top: 4px;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+
+  .auth-panel {
+    border-radius: 20px;
+    background: #c9c5bc;
+    padding: 28px 28px 24px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 24px;
+    gap: 20px;
   }
 
-  .auth--wide {
-    max-width: 1200px;
-    margin: 0 auto;
+  .auth-panel__header h1 {
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: center;
+    color: #111;
   }
 
-  .card {
-    border: 1px solid #ddd;
-    border-radius: 16px;
-    padding: 24px 24px 20px;
+  .auth-panel__subtitle {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #333;
+  }
+
+  .auth-form {
+    margin-top: 8px;
     display: flex;
     flex-direction: column;
     gap: 14px;
-    background: #fff;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
   }
-
-  .card--wide {
-    width: 100%;
-    max-width: 480px;
-  }
-
- 
 
   label {
     display: flex;
     flex-direction: column;
     gap: 6px;
     font-weight: 600;
-    color: #111;
-    font-size: 14px;
+    color: #222;
+    font-size: 0.9rem;
   }
 
   input {
     padding: 10px 12px;
     border-radius: 10px;
     border: 1px solid #444;
-    font-size: 14px;
+    font-size: 0.9rem;
+    background: #fff;
   }
 
-  button {
+  .auth-btn {
     padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid #444;
-    background: #111;
-    color: #fff;
+    border-radius: 999px;
+    border: 1px solid #111;
     font-weight: 700;
     cursor: pointer;
+    font-size: 0.95rem;
   }
 
-  button:disabled {
+  .auth-btn--primary {
+    background: #111;
+    color: #fff;
+  }
+
+  .auth-btn:disabled {
     opacity: 0.6;
     cursor: default;
   }
 
-  .error {
+  .auth-message {
+    font-size: 0.85rem;
+  }
+
+  .auth-message--error {
     color: #b00020;
-    font-size: 14px;
   }
 
-  .success {
+  .auth-message--success {
     color: #0a7b28;
-    font-size: 14px;
   }
 
-  .links {
+  .auth-links {
     display: flex;
-    justify-content: space-between;
-    font-size: 14px;
+    justify-content: flex-start;
+    font-size: 0.85rem;
+    margin-top: 4px;
+  }
+
+  .auth-links a {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 880px) {
+    .auth-shell {
+      grid-template-columns: 1fr;
+      padding: 18px;
+      gap: 18px;
+    }
+
+    .auth-hero {
+      height: 260px;
+    }
+
+    .auth-panel {
+      padding: 20px 18px 18px;
+    }
+
+    .auth-panel__header h1 {
+      font-size: 1.3rem;
+    }
   }
 
   @media (max-width: 600px) {
-    .card--wide {
-      max-width: 100%;
+    .auth-layout {
+      padding: 16px 8px 32px;
+    }
+
+    .auth-hero {
+      height: 220px;
+      border-radius: 16px;
+    }
+
+    .auth-panel {
+      border-radius: 16px;
     }
   }
 </style>
