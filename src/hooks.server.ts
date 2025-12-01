@@ -1,8 +1,12 @@
 // src/hooks.server.ts
+// src/hooks.server.ts
 import { createServerClient } from '@supabase/ssr';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 import type { Handle } from '@sveltejs/kit';
 import type { Session, User } from '@supabase/supabase-js';
+
+const PUBLIC_SUPABASE_URL = publicEnv.PUBLIC_SUPABASE_URL!;
+const PUBLIC_SUPABASE_ANON_KEY = publicEnv.PUBLIC_SUPABASE_ANON_KEY!;
 
 export const handle: Handle = async ({ event, resolve }) => {
   const supabase = createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
