@@ -1,5 +1,4 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
 	import CatalogHeader from '$lib/components/layout/CatalogHeader.svelte';
 	import Footer from '$lib/components/layout/Footer.svelte';
 
@@ -10,10 +9,6 @@
 	let { data, children } = $props();
 	const user = $derived(data.user ?? null);
 </script>
-
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
 
 <div class="page-root">
 	<CatalogHeader {user} />
