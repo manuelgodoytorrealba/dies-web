@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dies-web
+  labels:
+    app: dies-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dies-web
+  template:
+    metadata:
+      labels:
+        app: dies-web
+    spec:
+      containers:
+        - name: dies-web
+          image: localhost:5000/dies-web:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - secretRef:
+                name: dies-env
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dies-web-svc
+  labels:
+    app: dies-web
+spec:
+  selector:
+    app: dies-web
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dies-web-ingress
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    # Si vuestro cert-manager usa otro nombre de issuer, aquí se cambia
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  rules:
+    - host: dies-test.duckdns.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dies-web-svc
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - dies-test.duckdns.org
+      secretName: dies-web-tls
