@@ -1,6 +1,6 @@
 // src/routes/api/leads/+server.ts
 import { json, type RequestEvent } from '@sveltejs/kit';
-import { supabasePublic } from '$lib/server/supabase';
+import { getSupabasePublic } from '$lib/server/supabase';
 
 const LEADS_TABLE = 'leads';
 
@@ -8,9 +8,9 @@ export async function POST(event: RequestEvent) {
   const { request, url } = event;
 
   try {
+    const supabase = getSupabasePublic();
     const body = await request.json();
 
-    // Info cliente que ya puedes mandar desde el front si quieres
     const {
       product_id,
       talla,
@@ -29,7 +29,7 @@ export async function POST(event: RequestEvent) {
       channel: 'whatsapp',
       status: 'new',
 
-      // Analítica básica
+      // Analítica
       product_slug: product_slug ?? null,
       source_page: source_page ?? url.pathname,
       referer,
@@ -37,14 +37,14 @@ export async function POST(event: RequestEvent) {
       utm_medium: utm_medium ?? url.searchParams.get('utm_medium'),
       utm_campaign: utm_campaign ?? url.searchParams.get('utm_campaign'),
 
-      // cosas que de momento no usamos
+      // no usados aún
       user_id: null,
       phone: null,
       name: null,
       notes: null
     };
 
-    const { error } = await supabasePublic.from(LEADS_TABLE).insert(payload);
+    const { error } = await supabase.from(LEADS_TABLE).insert(payload);
 
     if (error) {
       console.error('[api/leads POST] supabase error', error);
